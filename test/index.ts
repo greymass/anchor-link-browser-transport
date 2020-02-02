@@ -130,7 +130,7 @@ function main() {
         loggedIn(session)
         return
     }
-    link.login('dumbtestapp')
+    link.login('dubmledore')
         .then(({account, session}) => {
             console.log('logged in', account)
             storeSession(session)

@@ -4,7 +4,8 @@
     "dev": "parcel index.html",
     "build": "parcel build index.html"
   },
-  "devDependencies": {
+  "dependencies": {
+    "anchor-link-browser-transport": "file:..",
     "anchor-link": ">=0.2.0",
     "eosio-signing-request": "1.x",
     "parcel": "^2.0.0-alpha.3.2",
