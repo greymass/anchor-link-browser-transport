@@ -10,7 +10,7 @@ export default `
     left: 0px;
     width: 100%;
     height: 100%;
-    z-index: 9999999;
+    z-index: 2147483647;
     display: none;
     align-items: center;
     justify-content: center;
