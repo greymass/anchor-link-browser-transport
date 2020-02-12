@@ -10,6 +10,8 @@ export interface BrowserTransportOptions {
     injectStyles?: boolean
 }
 
+let usingLocalWallet: boolean = false;
+
 export default class BrowserTransport implements LinkTransport {
     constructor(public readonly options: BrowserTransportOptions = {}) {
         this.classPrefix = options.classPrefix || 'anchor-link'
@@ -94,10 +96,15 @@ export default class BrowserTransport implements LinkTransport {
         }
     }
 
-    private async displayRequest(request: SigningRequest) {
+    private async processRequest(request: SigningRequest) {
         this.setupElements()
 
         const uri = request.encode(true, false)
+
+        if (usingLocalWallet) {
+            return (window.location.href = uri);
+        }
+
         const isIdentity = request.isIdentity()
         const title = isIdentity ? 'Log In' : 'Sign'
         const subtitle = 'Scan this QR code in Anchor to continue'
@@ -109,13 +116,15 @@ export default class BrowserTransport implements LinkTransport {
         })
 
         const linkEl = this.createEl({class: 'uri'})
-        linkEl.appendChild(
-            this.createEl({
-                tag: 'a',
-                href: uri,
-                text: 'Open in local wallet',
-            })
-        )
+        const aElement = this.createEl({
+            tag: 'a',
+            href: uri,
+            text: 'Open in local wallet',
+        });
+        aElement.addEventListener('click', () => {
+            usingLocalWallet = true;
+        });
+        linkEl.appendChild(aElement);
 
         const infoEl = this.createEl({class: 'info'})
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: title})
@@ -137,7 +146,7 @@ export default class BrowserTransport implements LinkTransport {
     public onRequest(request: SigningRequest, cancel: (reason: string | Error) => void) {
         this.activeRequest = request
         this.activeCancel = cancel
-        this.displayRequest(request).catch(cancel)
+        this.processRequest(request).catch(cancel)
     }
 
     public onSessionRequest(
