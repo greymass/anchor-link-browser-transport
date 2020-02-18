@@ -102,7 +102,7 @@ export default class BrowserTransport implements LinkTransport {
         const uri = request.encode(true, false)
 
         if (usingLocalWallet) {
-            return (window.location.href = uri);
+            window.location.href = uri;
         }
 
         const isIdentity = request.isIdentity()
@@ -140,7 +140,7 @@ export default class BrowserTransport implements LinkTransport {
         this.requestEl.appendChild(infoEl)
         this.requestEl.appendChild(actionEl)
 
-        this.show()
+        this.show();
     }
 
     public onRequest(request: SigningRequest, cancel: (reason: string | Error) => void) {
