@@ -24,6 +24,7 @@ export default class BrowserTransport implements LinkTransport {
     private requestEl!: HTMLElement
     private styleEl?: HTMLStyleElement
     private countdownTimer?: NodeJS.Timeout
+    private closeTimer?: NodeJS.Timeout
 
     private setupElements() {
         if (this.injectStyles && !this.styleEl) {
@@ -36,7 +37,6 @@ export default class BrowserTransport implements LinkTransport {
         if (!this.containerEl) {
             this.containerEl = this.createEl()
             this.containerEl.className = this.classPrefix
-            this.containerEl.style.display = 'hidden'
             this.containerEl.onclick = (event) => {
                 if (event.target === this.containerEl) {
                     event.stopPropagation()
@@ -44,14 +44,17 @@ export default class BrowserTransport implements LinkTransport {
                     if (this.activeCancel) {
                         this.activeRequest = undefined
                         this.activeCancel('Modal closed')
+                        this.activeCancel = undefined
                     }
                 }
             }
             document.body.appendChild(this.containerEl)
         }
         if (!this.requestEl) {
+            let wrapper = this.createEl({class: 'inner'})
             this.requestEl = this.createEl({class: 'request'})
-            this.containerEl.appendChild(this.requestEl)
+            wrapper.appendChild(this.requestEl)
+            this.containerEl.appendChild(wrapper)
         }
     }
 
@@ -82,10 +85,7 @@ export default class BrowserTransport implements LinkTransport {
         if (this.containerEl) {
             this.containerEl.classList.remove(`${this.classPrefix}-active`)
         }
-        if (this.countdownTimer) {
-            clearTimeout(this.countdownTimer)
-            this.countdownTimer = undefined
-        }
+        this.clearTimers()
     }
 
     private show() {
@@ -97,25 +97,34 @@ export default class BrowserTransport implements LinkTransport {
     private async displayRequest(request: SigningRequest) {
         this.setupElements()
 
-        const uri = request.encode(true, false)
+        let sameDeviceRequest = request.clone()
+        sameDeviceRequest.setInfoKey('same_device', true)
+        sameDeviceRequest.setInfoKey('return_path', returnUrl())
+
+        let sameDeviceUri = sameDeviceRequest.encode(true, false)
+        let crossDeviceUri = request.encode(true, false)
+
         const isIdentity = request.isIdentity()
-        const title = isIdentity ? 'Log In' : 'Sign'
-        const subtitle = 'Scan this QR code in Anchor to continue'
+        const title = isIdentity ? 'Login' : 'Sign'
+        const subtitle = 'Scan the QR-code with your Anchor app.'
 
         const qrEl = this.createEl({class: 'qr'})
-        qrEl.innerHTML = await qrcode.toString(uri, {
+        qrEl.innerHTML = await qrcode.toString(crossDeviceUri, {
             margin: 0,
             errorCorrectionLevel: 'L',
         })
 
         const linkEl = this.createEl({class: 'uri'})
-        linkEl.appendChild(
-            this.createEl({
-                tag: 'a',
-                href: uri,
-                text: 'Open in local wallet',
-            })
-        )
+        const linkA = this.createEl({
+            tag: 'a',
+            href: crossDeviceUri,
+            text: 'Open Anchor app',
+        })
+        linkA.addEventListener('click', (event) => {
+            event.preventDefault()
+            window.location.href = sameDeviceUri
+        })
+        linkEl.appendChild(linkA)
 
         const infoEl = this.createEl({class: 'info'})
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: title})
@@ -128,6 +137,9 @@ export default class BrowserTransport implements LinkTransport {
         actionEl.appendChild(linkEl)
 
         emptyElement(this.requestEl)
+
+        const logoEl = this.createEl({class: 'logo'})
+        this.requestEl.appendChild(logoEl)
         this.requestEl.appendChild(infoEl)
         this.requestEl.appendChild(actionEl)
 
@@ -143,50 +155,125 @@ export default class BrowserTransport implements LinkTransport {
     public onSessionRequest(
         session: LinkSession,
         request: SigningRequest,
-        timeout: number,
-        device: string,
         cancel: (reason: string | Error) => void
     ) {
+        if (session.metadata.sameDevice) {
+            request.setInfoKey('return_path', returnUrl())
+        }
+
+        if (session.type === 'fallback') {
+            this.onRequest(request, cancel)
+            if (session.metadata.sameDevice) {
+                // trigger directly on a fallback same-device session
+                window.location.href = request.encode()
+            }
+            return
+        }
+
         this.activeRequest = request
         this.activeCancel = cancel
         this.setupElements()
 
+        const timeout = session.metadata.timeout || 60 * 1000 * 2
+        const deviceName = session.metadata.name
+
         const start = Date.now()
-        const countdownEl = this.createEl({class: 'session-countdown'})
+        const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Sign'})
+
         const updateCountdown = () => {
             const timeLeft = timeout + start - Date.now()
-            countdownEl.textContent = new Date(timeLeft).toISOString().substr(14, 5)
+            const timeFormatted =
+                timeLeft > 0 ? new Date(timeLeft).toISOString().substr(14, 5) : '00:00'
+            infoTitle.textContent = `Sign - ${timeFormatted}`
         }
-        this.countdownTimer = setInterval(updateCountdown, 300)
+        this.countdownTimer = setInterval(updateCountdown, 500)
         updateCountdown()
 
-        const infoEl = this.createEl({class: 'session-info'})
-        infoEl.appendChild(document.createTextNode('Please open Anchor on '))
-        infoEl.appendChild(this.createEl({tag: 'span', class: 'device', text: device}))
-        infoEl.appendChild(document.createTextNode(' to review and sign the transaction.'))
+        const infoEl = this.createEl({class: 'info'})
+        infoEl.appendChild(infoTitle)
+
+        let subtitle: string
+        if (deviceName && deviceName.length > 0) {
+            subtitle = `Please open Anchor app on “${deviceName}” to review and sign the transaction.`
+        } else {
+            subtitle = 'Please review and sign the transaction in the linked wallet.'
+        }
+
+        const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
+        infoEl.appendChild(infoSubtitle)
 
         emptyElement(this.requestEl)
+        const logoEl = this.createEl({class: 'logo'})
+        this.requestEl.appendChild(logoEl)
         this.requestEl.appendChild(infoEl)
-        this.requestEl.appendChild(countdownEl)
         this.show()
+
+        if (isAppleHandheld() && session.metadata.sameDevice) {
+            window.location.href = 'anchor://link'
+        }
+    }
+
+    private clearTimers() {
+        if (this.closeTimer) {
+            clearTimeout(this.closeTimer)
+            this.closeTimer = undefined
+        }
+        if (this.countdownTimer) {
+            clearTimeout(this.countdownTimer)
+            this.countdownTimer = undefined
+        }
     }
 
     public onSuccess(request: SigningRequest) {
         if (request === this.activeRequest) {
-            this.hide()
+            this.clearTimers()
+            this.setupElements()
+            const infoEl = this.createEl({class: 'info'})
+            const logoEl = this.createEl({class: 'logo'})
+            logoEl.classList.add('success')
+            const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Success!'})
+            const subtitle = request.isIdentity()
+                ? 'Identity proof verified.'
+                : 'Transaction broadcast to network.'
+            const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
+            infoEl.appendChild(infoTitle)
+            infoEl.appendChild(infoSubtitle)
+            emptyElement(this.requestEl)
+            this.requestEl.appendChild(logoEl)
+            this.requestEl.appendChild(infoEl)
+            this.show()
+            this.closeTimer = setTimeout(() => {
+                this.hide()
+            }, 2 * 1000)
         }
     }
 
     public onFailure(request: SigningRequest, error: Error) {
         if (request === this.activeRequest) {
+            this.clearTimers()
             this.setupElements()
-            const errorEl = this.createEl({class: 'error'})
-            errorEl.innerHTML = `
-                Transaction error: ${error.message || String(error)}
-            `
+            const infoEl = this.createEl({class: 'info'})
+            const logoEl = this.createEl({class: 'logo'})
+            logoEl.classList.add('error')
+            const infoTitle = this.createEl({
+                class: 'title',
+                tag: 'span',
+                text: 'Transaction error',
+            })
+            const infoSubtitle = this.createEl({
+                class: 'subtitle',
+                tag: 'span',
+                text: error.message || String(error),
+            })
+            infoEl.appendChild(infoTitle)
+            infoEl.appendChild(infoSubtitle)
             emptyElement(this.requestEl)
-            this.requestEl.appendChild(errorEl)
+            this.requestEl.appendChild(logoEl)
+            this.requestEl.appendChild(infoEl)
             this.show()
+            this.closeTimer = setTimeout(() => {
+                this.hide()
+            }, 5 * 1000)
         }
     }
 }
@@ -195,4 +282,19 @@ function emptyElement(el: HTMLElement) {
     while (el.firstChild) {
         el.removeChild(el.firstChild)
     }
+}
+
+const returnUrlAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+const returnUrlAlphabetLen = returnUrlAlphabet.length
+/** Generate a return url with a random #fragment so mobile safari will redirect back w/o reload. */
+function returnUrl() {
+    let rv = window.location.href.split('#')[0] + '#'
+    for (let i = 0; i < 8; i++) {
+        rv += returnUrlAlphabet.charAt(Math.floor(Math.random() * returnUrlAlphabetLen))
+    }
+    return rv
+}
+
+function isAppleHandheld() {
+    return /iP(ad|od|hone)/i.test(navigator.userAgent)
 }

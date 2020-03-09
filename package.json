@@ -16,20 +16,20 @@
   },
   "peerDependencies": {
     "anchor-link": ">=0.2.0",
-    "eosio-signing-request": "1.x"
+    "eosio-signing-request": "^1.1.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.4",
-    "@types/node": "^13.7.0",
+    "@babel/core": "^7.8.7",
+    "@types/node": "^13.9.0",
     "@types/qrcode": "^1.3.4",
-    "@types/ws": "^7.2.1",
-    "anchor-link": ">=0.2.0",
-    "eosio-signing-request": "1.x",
+    "@types/ws": "^7.2.2",
+    "anchor-link": ">=0.3.0",
+    "eosio-signing-request": "^1.1.1",
     "prettier": "^1.19.1",
     "ts-node": "^8.6.2",
     "tslint": "^6.0.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.0.1",
-    "typescript": "^3.7.5"
+    "typescript": "^3.8.3"
   }
 }
