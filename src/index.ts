@@ -233,8 +233,8 @@ export default class BrowserTransport implements LinkTransport {
             logoEl.classList.add('success')
             const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Success!'})
             const subtitle = request.isIdentity()
-                ? 'Identity proof verified.'
-                : 'Transaction broadcast to network.'
+                ? 'Identity signed.'
+                : 'Transaction signed.'
             const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
             infoEl.appendChild(infoTitle)
             infoEl.appendChild(infoSubtitle)
@@ -244,7 +244,7 @@ export default class BrowserTransport implements LinkTransport {
             this.show()
             this.closeTimer = setTimeout(() => {
                 this.hide()
-            }, 2 * 1000)
+            }, 1.5 * 1000)
         }
     }
 
