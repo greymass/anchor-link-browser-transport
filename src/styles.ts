@@ -13,7 +13,7 @@ export default `
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    position: absolute;
+    position: fixed;
     top: 0px;
     left: 0px;
     width: 100%;
