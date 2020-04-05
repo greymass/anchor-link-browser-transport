@@ -232,9 +232,7 @@ export default class BrowserTransport implements LinkTransport {
             const logoEl = this.createEl({class: 'logo'})
             logoEl.classList.add('success')
             const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Success!'})
-            const subtitle = request.isIdentity()
-                ? 'Identity signed.'
-                : 'Transaction signed.'
+            const subtitle = request.isIdentity() ? 'Identity signed.' : 'Transaction signed.'
             const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
             infoEl.appendChild(infoTitle)
             infoEl.appendChild(infoSubtitle)
