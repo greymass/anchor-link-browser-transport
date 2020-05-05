@@ -8,7 +8,7 @@ export interface BrowserTransportOptions {
     classPrefix?: string
     /** Whether to inject CSS styles in the page header, defaults to true. */
     injectStyles?: boolean
-    /** Whether to display request success and error messages */
+    /** Whether to display request success and error messages, defaults to true */
     requestStatus?: boolean
 }
 
