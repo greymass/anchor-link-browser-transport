@@ -249,7 +249,6 @@ export default class BrowserTransport implements LinkTransport {
                     this.hide()
                 }, 1.5 * 1000)
             } else {
-                emptyElement(this.requestEl)
                 this.hide()
             }
         }
@@ -283,7 +282,6 @@ export default class BrowserTransport implements LinkTransport {
                     this.hide()
                 }, 5 * 1000)
             } else {
-                emptyElement(this.requestEl)
                 this.hide()
             }
         }
