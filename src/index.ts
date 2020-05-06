@@ -8,16 +8,20 @@ export interface BrowserTransportOptions {
     classPrefix?: string
     /** Whether to inject CSS styles in the page header, defaults to true. */
     injectStyles?: boolean
+    /** Whether to display request success and error messages, defaults to true */
+    requestStatus?: boolean
 }
 
 export default class BrowserTransport implements LinkTransport {
     constructor(public readonly options: BrowserTransportOptions = {}) {
         this.classPrefix = options.classPrefix || 'anchor-link'
         this.injectStyles = !(options.injectStyles === false)
+        this.requestStatus = !(options.requestStatus === false)
     }
 
     private classPrefix: string
     private injectStyles: boolean
+    private requestStatus: boolean
     private activeRequest?: SigningRequest
     private activeCancel?: (reason: string | Error) => void
     private containerEl!: HTMLElement
@@ -227,51 +231,59 @@ export default class BrowserTransport implements LinkTransport {
     public onSuccess(request: SigningRequest) {
         if (request === this.activeRequest) {
             this.clearTimers()
-            this.setupElements()
-            const infoEl = this.createEl({class: 'info'})
-            const logoEl = this.createEl({class: 'logo'})
-            logoEl.classList.add('success')
-            const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Success!'})
-            const subtitle = request.isIdentity() ? 'Identity signed.' : 'Transaction signed.'
-            const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
-            infoEl.appendChild(infoTitle)
-            infoEl.appendChild(infoSubtitle)
-            emptyElement(this.requestEl)
-            this.requestEl.appendChild(logoEl)
-            this.requestEl.appendChild(infoEl)
-            this.show()
-            this.closeTimer = setTimeout(() => {
+            if (this.requestStatus) {
+                this.setupElements()
+                const infoEl = this.createEl({class: 'info'})
+                const logoEl = this.createEl({class: 'logo'})
+                logoEl.classList.add('success')
+                const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Success!'})
+                const subtitle = request.isIdentity() ? 'Identity signed.' : 'Transaction signed.'
+                const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
+                infoEl.appendChild(infoTitle)
+                infoEl.appendChild(infoSubtitle)
+                emptyElement(this.requestEl)
+                this.requestEl.appendChild(logoEl)
+                this.requestEl.appendChild(infoEl)
+                this.show()
+                this.closeTimer = setTimeout(() => {
+                    this.hide()
+                }, 1.5 * 1000)
+            } else {
                 this.hide()
-            }, 1.5 * 1000)
+            }
         }
     }
 
     public onFailure(request: SigningRequest, error: Error) {
         if (request === this.activeRequest) {
             this.clearTimers()
-            this.setupElements()
-            const infoEl = this.createEl({class: 'info'})
-            const logoEl = this.createEl({class: 'logo'})
-            logoEl.classList.add('error')
-            const infoTitle = this.createEl({
-                class: 'title',
-                tag: 'span',
-                text: 'Transaction error',
-            })
-            const infoSubtitle = this.createEl({
-                class: 'subtitle',
-                tag: 'span',
-                text: error.message || String(error),
-            })
-            infoEl.appendChild(infoTitle)
-            infoEl.appendChild(infoSubtitle)
-            emptyElement(this.requestEl)
-            this.requestEl.appendChild(logoEl)
-            this.requestEl.appendChild(infoEl)
-            this.show()
-            this.closeTimer = setTimeout(() => {
+            if (this.requestStatus) {
+                this.setupElements()
+                const infoEl = this.createEl({class: 'info'})
+                const logoEl = this.createEl({class: 'logo'})
+                logoEl.classList.add('error')
+                const infoTitle = this.createEl({
+                    class: 'title',
+                    tag: 'span',
+                    text: 'Transaction error',
+                })
+                const infoSubtitle = this.createEl({
+                    class: 'subtitle',
+                    tag: 'span',
+                    text: error.message || String(error),
+                })
+                infoEl.appendChild(infoTitle)
+                infoEl.appendChild(infoSubtitle)
+                emptyElement(this.requestEl)
+                this.requestEl.appendChild(logoEl)
+                this.requestEl.appendChild(infoEl)
+                this.show()
+                this.closeTimer = setTimeout(() => {
+                    this.hide()
+                }, 5 * 1000)
+            } else {
                 this.hide()
-            }, 5 * 1000)
+            }
         }
     }
 }
