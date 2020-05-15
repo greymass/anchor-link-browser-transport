@@ -1,4 +1,4 @@
-import {LinkSession, LinkTransport} from 'anchor-link'
+import {LinkSession, LinkStorage, LinkTransport} from 'anchor-link'
 import {SigningRequest} from 'eosio-signing-request'
 import * as qrcode from 'qrcode'
 import styleText from './styles'
@@ -10,13 +10,34 @@ export interface BrowserTransportOptions {
     injectStyles?: boolean
     /** Whether to display request success and error messages, defaults to true */
     requestStatus?: boolean
+    /** Local storage prefix, defaults to `anchor-link`. */
+    storagePrefix?: string
+}
+
+class Storage implements LinkStorage {
+    constructor(readonly keyPrefix: string) {}
+    async write(key: string, data: string): Promise<void> {
+        localStorage.setItem(this.storageKey(key), data)
+    }
+    async read(key: string): Promise<string | null> {
+        return localStorage.getItem(this.storageKey(key))
+    }
+    async remove(key: string): Promise<void> {
+        localStorage.removeItem(this.storageKey(key))
+    }
+    storageKey(key: string) {
+        return `${this.keyPrefix}-${key}`
+    }
 }
 
 export default class BrowserTransport implements LinkTransport {
+    storage: LinkStorage
+
     constructor(public readonly options: BrowserTransportOptions = {}) {
         this.classPrefix = options.classPrefix || 'anchor-link'
         this.injectStyles = !(options.injectStyles === false)
         this.requestStatus = !(options.requestStatus === false)
+        this.storage = new Storage(options.storagePrefix || 'anchor-link')
     }
 
     private classPrefix: string
