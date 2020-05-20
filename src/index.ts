@@ -182,6 +182,9 @@ export default class BrowserTransport implements LinkTransport {
         request: SigningRequest,
         cancel: (reason: string | Error) => void
     ) {
+
+        session.link.rpc.fetchBuiltin = session.link.rpc.fetchBuiltin.bind(window)
+
         if (session.metadata.sameDevice) {
             request.setInfoKey('return_path', returnUrl())
         }
