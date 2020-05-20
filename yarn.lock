@@ -259,19 +259,19 @@
   dependencies:
     "@types/node" "*"
 
-anchor-link@^1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/anchor-link/-/anchor-link-1.0.1.tgz#a66412af1f2d8631a987bc39bbe75805b6414bcf"
-  integrity sha512-FEc0NGMGFJF4MOgsA3XooTGGnE73XHY5Mdnpso8WJPaHK0Kas6nk5xHYthD/ddmVXMk2zFXkrPTwQ1crvqUwrQ==
+anchor-link@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/anchor-link/-/anchor-link-2.0.0.tgz#94427cf12dd63432d9bd2713a3f3fb78b23d7a17"
+  integrity sha512-kZupmZrJX1unyyU/mfQ+suKrEY7BlKMRzrInkx+2biHNNejez/yzUh29cA34VPhZp4AwlW2Y+KlC2Y4lDFgcuw==
   dependencies:
-    eosio-signing-request "^1.1.1"
+    eosio-signing-request "^1.2.0"
     eosjs "^20.0.0"
     eosjs-ecc "^4.0.7"
     fetch-ponyfill "^6.1.0"
     isomorphic-ws "^4.0.1"
     pako "^1.0.10"
-    uuid "^7.0.3"
-    ws "^7.2.3"
+    uuid "^8.0.0"
+    ws "^7.2.5"
 
 ansi-regex@^4.1.0:
   version "4.1.0"
@@ -542,14 +542,6 @@ emoji-regex@^7.0.1:
   version "7.0.3"
   resolved "https://registry.yarnpkg.com/emoji-regex/-/emoji-regex-7.0.3.tgz#933a04052860c85e83c122479c4748a8e4c72156"
   integrity sha512-CwBLREIQ7LvYFB0WyRvwhq5N5qPhc6PMjD6bYggFlI5YyDgl+0vxq5VHbMOFqLg7hfWzmu8T5Z1QofhmTIhItA==
-
-eosio-signing-request@^1.1.1:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/eosio-signing-request/-/eosio-signing-request-1.1.2.tgz#846bbc71cc271edbab993e26d1d6c6cce2f6ebca"
-  integrity sha512-/trIwR20u24E58Y/AnAXiNyV5swHXZ+GeRgnQ403gMjAC0gkd7EmRl/dXYiRlhyPIj5uu0p5rEfASX2jCOe//Q==
-  dependencies:
-    eosjs "^20.0.0"
-    fast-sha256 "^1.1.1"
 
 eosio-signing-request@^1.2.0:
   version "1.2.0"
@@ -1269,10 +1261,10 @@ universalify@^0.1.0:
   resolved "https://registry.yarnpkg.com/universalify/-/universalify-0.1.2.tgz#b646f69be3942dabcecc9d6639c80dc105efaa66"
   integrity sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==
 
-uuid@^7.0.3:
-  version "7.0.3"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-7.0.3.tgz#c5c9f2c8cf25dc0a372c4df1441c41f5bd0c680b"
-  integrity sha512-DPSke0pXhTZgoF/d+WSt2QaKMCFSfx7QegxEWT+JOuHF5aWrKEn0G+ztjuJg/gG8/ItK+rbPCD/yNv8yyih6Cg==
+uuid@^8.0.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.1.0.tgz#6f1536eb43249f473abc6bd58ff983da1ca30d8d"
+  integrity sha512-CI18flHDznR0lq54xBycOVmphdCYnQLKn8abKn7PXUiKUGdEd+/l9LWNJmugXel4hXq7S+RMNl34ecyC9TntWg==
 
 which-module@^2.0.0:
   version "2.0.0"
@@ -1293,10 +1285,10 @@ wrappy@1:
   resolved "https://registry.yarnpkg.com/wrappy/-/wrappy-1.0.2.tgz#b5243d8f3ec1aa35f1364605bc0d1036e30ab69f"
   integrity sha1-tSQ9jz7BqjXxNkYFvA0QNuMKtp8=
 
-ws@^7.2.3:
-  version "7.2.3"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-7.2.3.tgz#a5411e1fb04d5ed0efee76d26d5c46d830c39b46"
-  integrity sha512-HTDl9G9hbkNDk98naoR/cHDws7+EyYMOdL1BmjsZXRUjf7d+MficC4B7HLUPlSiho0vg+CWKrGIt/VJBd1xunQ==
+ws@^7.2.5:
+  version "7.3.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.3.0.tgz#4b2f7f219b3d3737bc1a2fbf145d825b94d38ffd"
+  integrity sha512-iFtXzngZVXPGgpTlP1rBqsUK82p9tKqsWRPg5L56egiljujJT3vGAYnHANvFxBieXrTFavhzhxW52jnaWV+w2w==
 
 y18n@^4.0.0:
   version "4.0.0"
