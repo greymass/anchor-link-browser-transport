@@ -1,6 +1,6 @@
 {
   "name": "anchor-link-browser-transport",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Vanilla JS browser transport for Anchor Link",
   "license": "MIT",
   "main": "lib/index.es5.js",
