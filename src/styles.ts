@@ -67,6 +67,7 @@ export default `
 }
 
 .%prefix%-title {
+    color: #5C5C5C;
     font-size: 1.8em;
     margin-top: 0.5em;
     font-weight: bold;
