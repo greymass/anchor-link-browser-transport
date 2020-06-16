@@ -47,6 +47,7 @@ export default class BrowserTransport implements LinkTransport {
         this.requestStatus = !(options.requestStatus === false)
         this.fuelEnabled = options.enableGreymassFuel === true
         this.storage = new Storage(options.storagePrefix || 'anchor-link')
+        this.prepareStatus = 'Preparing request...'
     }
 
     private classPrefix: string
@@ -61,12 +62,15 @@ export default class BrowserTransport implements LinkTransport {
     private countdownTimer?: NodeJS.Timeout
     private closeTimer?: NodeJS.Timeout
 
+    public prepareStatus: string
+
     private closeModal() {
         this.hide()
         if (this.activeCancel) {
             this.activeRequest = undefined
             this.activeCancel('Modal closed')
             this.activeCancel = undefined
+            this.prepareStatus = 'Preparing request...'
         }
     }
 
@@ -228,8 +232,14 @@ export default class BrowserTransport implements LinkTransport {
         const infoSubtitle = this.createEl({
             class: 'subtitle',
             tag: 'span',
-            text: 'Preparing request...',
+            text: this.prepareStatus,
         })
+        const updateMessage = () => {
+            infoSubtitle.textContent = this.prepareStatus
+        }
+        this.countdownTimer = setInterval(updateMessage, 500)
+        updateMessage()
+
         infoEl.appendChild(infoTitle)
         infoEl.appendChild(infoSubtitle)
 
@@ -318,6 +328,10 @@ export default class BrowserTransport implements LinkTransport {
         }
     }
 
+    private updatePrepareStatus(message: string): void {
+        this.prepareStatus = message
+    }
+
     public async prepare(request: SigningRequest, session?: LinkSession) {
         this.showLoading()
         if (!this.fuelEnabled || !session || request.isIdentity()) {
@@ -325,7 +339,7 @@ export default class BrowserTransport implements LinkTransport {
             return request
         }
         try {
-            return await fuel(request, session)
+            return await fuel(request, session, this.updatePrepareStatus.bind(this))
         } catch (error) {
             console.info(`Not applying fuel (${error.message})`)
         }

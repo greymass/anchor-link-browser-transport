@@ -18,7 +18,12 @@ async function apiCall(url: string, body?: any) {
     ).json()
 }
 
-export async function fuel(request: SigningRequest, session: LinkSession) {
+export async function fuel(
+    request: SigningRequest,
+    session: LinkSession,
+    updatePrepareStatus: (message: string) => void
+) {
+    updatePrepareStatus('Detecting if Fuel is required.')
     const cloned = request.clone()
     const chainId = cloned.getChainId()
     const nodeUrl = supportedChains[chainId]
