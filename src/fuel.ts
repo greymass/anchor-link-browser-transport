@@ -1,5 +1,5 @@
-import {SigningRequest} from 'eosio-signing-request'
 import {LinkSession} from 'anchor-link'
+import {SigningRequest} from 'eosio-signing-request'
 
 const supportedChains = {
     '2a02a0053e5a8cf73a56ba0fda11e4d92e0238a4a2aa74fccf46d5a910746840':
@@ -22,49 +22,19 @@ export async function fuel(request: SigningRequest, session: LinkSession) {
     const chainId = request.getChainId()
     const nodeUrl = supportedChains[chainId]
     if (!nodeUrl) {
-        throw new Error('Chain not supported')
+        throw new Error('Chain does not support Fuel.')
     }
-    // check if account needs fuel
-    const accountObj = await apiCall(nodeUrl + '/v1/chain/get_account', {
-        account_name: session.auth.actor,
-    })
-    if (!(accountObj.net_limit && accountObj.net_limit.available < 5000)) {
-        throw new Error('Fuel not needed')
-    }
-    // resolve transaction
-    request = prependAction(request, {
-        account: 'greymassnoop',
-        name: 'noop',
-        authorization: [{actor: 'greymassfuel', permission: 'cosign'}],
-        data: '',
-    })
-    const abis = await request.fetchAbis()
-    let ctx: any
-    if (request.requiresTapos()) {
-        ctx = createTapos(await apiCall(nodeUrl + '/v1/chain/get_info'))
-    }
-    const resolved = request.resolve(abis, session.auth, ctx)
-    // get fuel signature
-    const result = await apiCall(nodeUrl + '/v1/fuel/get_signature', {
-        signatures: [],
-        compression: 0,
-        packed_context_free_data: '',
-        packed_trx: arrayToHex(resolved.serializedTransaction),
+    const result = await apiCall(nodeUrl + '/v1/cosigner/sign', {
+        request: request,
+        signer: session.auth,
     })
     if (result.data.signatures[0]) {
         request.setInfoKey('fuel_sig', result.data.signatures[0])
     } else {
-        throw new Error('No signature from fuel')
+        throw new Error('No signature returned from Fuel')
     }
-    // hack so we don't have to bundle the ESR lib with the transport
-    const SR = request.constructor as typeof SigningRequest
     // ok to mutate request here, prependAction took a copy
-    request.data = (
-        await SR.create(
-            {transaction: resolved.transaction},
-            {abiProvider: (request as any).abiProvider}
-        )
-    ).data
+    request.data.req = result.data.request
     return request
 }
 
