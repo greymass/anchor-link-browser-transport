@@ -61,6 +61,7 @@ export default class BrowserTransport implements LinkTransport {
     private styleEl?: HTMLStyleElement
     private countdownTimer?: NodeJS.Timeout
     private closeTimer?: NodeJS.Timeout
+    private prepareMessageTimer?: NodeJS.Timeout
 
     public prepareStatus: string
 
@@ -237,7 +238,7 @@ export default class BrowserTransport implements LinkTransport {
         const updateMessage = () => {
             infoSubtitle.textContent = this.prepareStatus
         }
-        this.countdownTimer = setInterval(updateMessage, 500)
+        this.prepareMessageTimer = setInterval(updateMessage, 500)
         updateMessage()
 
         infoEl.appendChild(infoTitle)
@@ -325,6 +326,10 @@ export default class BrowserTransport implements LinkTransport {
         if (this.countdownTimer) {
             clearTimeout(this.countdownTimer)
             this.countdownTimer = undefined
+        }
+        if (this.prepareMessageTimer) {
+            clearTimeout(this.prepareMessageTimer)
+            this.prepareMessageTimer = undefined
         }
     }
 
