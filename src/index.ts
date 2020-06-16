@@ -3,6 +3,8 @@ import {SigningRequest} from 'eosio-signing-request'
 import * as qrcode from 'qrcode'
 import styleText from './styles'
 
+import {fuel} from './fuel'
+
 export interface BrowserTransportOptions {
     /** CSS class prefix, defaults to `anchor-link` */
     classPrefix?: string
@@ -12,6 +14,12 @@ export interface BrowserTransportOptions {
     requestStatus?: boolean
     /** Local storage prefix, defaults to `anchor-link`. */
     storagePrefix?: string
+    /**
+     * Whether to use Greymass Fuel for low resource accounts, defaults to false.
+     * Note that this service is not available on all networks.
+     * Visit https://greymass.com/en/fuel for more information.
+     */
+    enableGreymassFuel?: boolean
 }
 
 class Storage implements LinkStorage {
@@ -37,12 +45,14 @@ export default class BrowserTransport implements LinkTransport {
         this.classPrefix = options.classPrefix || 'anchor-link'
         this.injectStyles = !(options.injectStyles === false)
         this.requestStatus = !(options.requestStatus === false)
+        this.fuelEnabled = options.enableGreymassFuel === true
         this.storage = new Storage(options.storagePrefix || 'anchor-link')
     }
 
     private classPrefix: string
     private injectStyles: boolean
     private requestStatus: boolean
+    private fuelEnabled: boolean
     private activeRequest?: SigningRequest
     private activeCancel?: (reason: string | Error) => void
     private containerEl!: HTMLElement
@@ -247,6 +257,19 @@ export default class BrowserTransport implements LinkTransport {
             clearTimeout(this.countdownTimer)
             this.countdownTimer = undefined
         }
+    }
+
+    public async prepare(request: SigningRequest, session?: LinkSession) {
+        if (!this.fuelEnabled || !session || request.isIdentity()) {
+            // don't attempt to cosign id request or if we don't have a session attached
+            return request
+        }
+        try {
+            return await fuel(request, session)
+        } catch (error) {
+            console.info(`Not applying fuel (${error.message})`)
+        }
+        return request
     }
 
     public onSuccess(request: SigningRequest) {
