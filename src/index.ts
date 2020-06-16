@@ -185,12 +185,37 @@ export default class BrowserTransport implements LinkTransport {
         actionEl.appendChild(qrEl)
         actionEl.appendChild(linkEl)
 
+        let footnoteEl: HTMLElement
+        if (isIdentity) {
+            footnoteEl = this.createEl({class: 'footnote', text: "Don't have Anchor? "})
+            const footnoteLink = this.createEl({
+                tag: 'a',
+                target: '_blank',
+                href: 'https://greymass.com/anchor',
+                text: 'Download Anchor app now',
+            })
+            footnoteEl.appendChild(footnoteLink)
+        } else {
+            footnoteEl = this.createEl({
+                class: 'footnote',
+                text: 'Anchor signing is brought to you by ',
+            })
+            const footnoteLink = this.createEl({
+                tag: 'a',
+                target: '_blank',
+                href: 'https://greymass.com',
+                text: 'Greymass',
+            })
+            footnoteEl.appendChild(footnoteLink)
+        }
+
         emptyElement(this.requestEl)
 
         const logoEl = this.createEl({class: 'logo'})
         this.requestEl.appendChild(logoEl)
         this.requestEl.appendChild(infoEl)
         this.requestEl.appendChild(actionEl)
+        this.requestEl.appendChild(footnoteEl)
 
         this.show()
     }
