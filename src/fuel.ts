@@ -19,21 +19,21 @@ async function apiCall(url: string, body?: any) {
 }
 
 export async function fuel(request: SigningRequest, session: LinkSession) {
-    const chainId = request.getChainId()
+    const cloned = request.clone()
+    const chainId = cloned.getChainId()
     const nodeUrl = supportedChains[chainId]
     if (!nodeUrl) {
         throw new Error('Chain does not support Fuel.')
     }
     const result = await apiCall(nodeUrl + '/v1/cosigner/sign', {
-        request: request,
+        request: cloned,
         signer: session.auth,
     })
     if (result.data.signatures[0]) {
-        request.setInfoKey('fuel_sig', result.data.signatures[0])
+        cloned.setInfoKey('fuel_sig', result.data.signatures[0])
     } else {
         throw new Error('No signature returned from Fuel')
     }
-    // ok to mutate request here, prependAction took a copy
-    request.data.req = result.data.request
-    return request
+    cloned.data.req = result.data.request
+    return cloned
 }
