@@ -61,6 +61,15 @@ export default class BrowserTransport implements LinkTransport {
     private countdownTimer?: NodeJS.Timeout
     private closeTimer?: NodeJS.Timeout
 
+    private closeModal() {
+        this.hide()
+        if (this.activeCancel) {
+            this.activeRequest = undefined
+            this.activeCancel('Modal closed')
+            this.activeCancel = undefined
+        }
+    }
+
     private setupElements() {
         if (this.injectStyles && !this.styleEl) {
             this.styleEl = document.createElement('style')
@@ -75,20 +84,21 @@ export default class BrowserTransport implements LinkTransport {
             this.containerEl.onclick = (event) => {
                 if (event.target === this.containerEl) {
                     event.stopPropagation()
-                    this.hide()
-                    if (this.activeCancel) {
-                        this.activeRequest = undefined
-                        this.activeCancel('Modal closed')
-                        this.activeCancel = undefined
-                    }
+                    this.closeModal()
                 }
             }
             document.body.appendChild(this.containerEl)
         }
         if (!this.requestEl) {
             let wrapper = this.createEl({class: 'inner'})
+            let closeButton = this.createEl({class: 'close'})
+            closeButton.onclick = (event) => {
+                event.stopPropagation()
+                this.closeModal()
+            }
             this.requestEl = this.createEl({class: 'request'})
             wrapper.appendChild(this.requestEl)
+            wrapper.appendChild(closeButton)
             this.containerEl.appendChild(wrapper)
         }
     }
@@ -144,10 +154,14 @@ export default class BrowserTransport implements LinkTransport {
         const subtitle = 'Scan the QR-code with your Anchor app.'
 
         const qrEl = this.createEl({class: 'qr'})
-        qrEl.innerHTML = await qrcode.toString(crossDeviceUri, {
-            margin: 0,
-            errorCorrectionLevel: 'L',
-        })
+        try {
+            qrEl.innerHTML = await qrcode.toString(crossDeviceUri, {
+                margin: 0,
+                errorCorrectionLevel: 'L',
+            })
+        } catch (error) {
+            console.warn('Unable to generate QR code', error)
+        }
 
         const linkEl = this.createEl({class: 'uri'})
         const linkA = this.createEl({
@@ -177,6 +191,26 @@ export default class BrowserTransport implements LinkTransport {
         this.requestEl.appendChild(logoEl)
         this.requestEl.appendChild(infoEl)
         this.requestEl.appendChild(actionEl)
+
+        this.show()
+    }
+
+    private async showLoading() {
+        this.setupElements()
+        emptyElement(this.requestEl)
+        const infoEl = this.createEl({class: 'info'})
+        const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Loading'})
+        const infoSubtitle = this.createEl({
+            class: 'subtitle',
+            tag: 'span',
+            text: 'Preparing request...',
+        })
+        infoEl.appendChild(infoTitle)
+        infoEl.appendChild(infoSubtitle)
+
+        const logoEl = this.createEl({class: 'logo loading'})
+        this.requestEl.appendChild(logoEl)
+        this.requestEl.appendChild(infoEl)
 
         this.show()
     }
@@ -260,6 +294,7 @@ export default class BrowserTransport implements LinkTransport {
     }
 
     public async prepare(request: SigningRequest, session?: LinkSession) {
+        this.showLoading()
         if (!this.fuelEnabled || !session || request.isIdentity()) {
             // don't attempt to cosign id request or if we don't have a session attached
             return request
