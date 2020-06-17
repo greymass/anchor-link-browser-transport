@@ -47,7 +47,6 @@ export default class BrowserTransport implements LinkTransport {
         this.requestStatus = !(options.requestStatus === false)
         this.fuelEnabled = options.enableGreymassFuel === true
         this.storage = new Storage(options.storagePrefix || 'anchor-link')
-        this.prepareStatus = 'Preparing request...'
     }
 
     private classPrefix: string
@@ -63,15 +62,12 @@ export default class BrowserTransport implements LinkTransport {
     private closeTimer?: NodeJS.Timeout
     private prepareStatusEl?: HTMLElement
 
-    public prepareStatus: string
-
     private closeModal() {
         this.hide()
         if (this.activeCancel) {
             this.activeRequest = undefined
             this.activeCancel('Modal closed')
             this.activeCancel = undefined
-            this.prepareStatus = 'Preparing request...'
         }
     }
 
@@ -233,7 +229,7 @@ export default class BrowserTransport implements LinkTransport {
         const infoSubtitle = this.createEl({
             class: 'subtitle',
             tag: 'span',
-            text: this.prepareStatus,
+            text: 'Preparing request...',
         })
         this.prepareStatusEl = infoSubtitle
 
@@ -326,9 +322,8 @@ export default class BrowserTransport implements LinkTransport {
     }
 
     private updatePrepareStatus(message: string): void {
-        this.prepareStatus = message
         if (this.prepareStatusEl) {
-            this.prepareStatusEl.textContent = this.prepareStatus
+            this.prepareStatusEl.textContent = message
         }
     }
 
