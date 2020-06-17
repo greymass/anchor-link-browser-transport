@@ -334,7 +334,11 @@ export default class BrowserTransport implements LinkTransport {
             return request
         }
         try {
-            return await fuel(request, session, this.updatePrepareStatus.bind(this))
+            const result = fuel(request, session, this.updatePrepareStatus.bind(this))
+            const timeout = new Promise((r) => setTimeout(r, 3500)).then(() => {
+                throw new Error('Fuel API timeout after 3500ms')
+            })
+            return await Promise.race([result, timeout])
         } catch (error) {
             console.info(`Not applying fuel (${error.message})`)
         }
