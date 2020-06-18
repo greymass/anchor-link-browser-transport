@@ -221,7 +221,7 @@ export default class BrowserTransport implements LinkTransport {
         this.show()
     }
 
-    private async showLoading() {
+    public async showLoading() {
         this.setupElements()
         emptyElement(this.requestEl)
         const infoEl = this.createEl({class: 'info'})
