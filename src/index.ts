@@ -372,7 +372,7 @@ export default class BrowserTransport implements LinkTransport {
     }
 
     public onFailure(request: SigningRequest, error: Error) {
-        if (request === this.activeRequest) {
+        if (request === this.activeRequest && error['code'] !== 'E_CANCEL') {
             this.clearTimers()
             if (this.requestStatus) {
                 this.setupElements()
