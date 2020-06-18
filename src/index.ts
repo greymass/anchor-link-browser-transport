@@ -19,7 +19,7 @@ export interface BrowserTransportOptions {
      * Note that this service is not available on all networks.
      * Visit https://greymass.com/en/fuel for more information.
      */
-    enableGreymassFuel?: boolean
+    disableGreymassFuel?: boolean
 }
 
 class Storage implements LinkStorage {
@@ -45,7 +45,7 @@ export default class BrowserTransport implements LinkTransport {
         this.classPrefix = options.classPrefix || 'anchor-link'
         this.injectStyles = !(options.injectStyles === false)
         this.requestStatus = !(options.requestStatus === false)
-        this.fuelEnabled = options.enableGreymassFuel === true
+        this.fuelEnabled = options.disableGreymassFuel !== true
         this.storage = new Storage(options.storagePrefix || 'anchor-link')
     }
 
