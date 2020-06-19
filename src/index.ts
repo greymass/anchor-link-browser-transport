@@ -3,6 +3,8 @@ import {SigningRequest} from 'eosio-signing-request'
 import * as qrcode from 'qrcode'
 import styleText from './styles'
 
+import {fuel} from './fuel'
+
 export interface BrowserTransportOptions {
     /** CSS class prefix, defaults to `anchor-link` */
     classPrefix?: string
@@ -12,6 +14,12 @@ export interface BrowserTransportOptions {
     requestStatus?: boolean
     /** Local storage prefix, defaults to `anchor-link`. */
     storagePrefix?: string
+    /**
+     * Whether to use Greymass Fuel for low resource accounts, defaults to false.
+     * Note that this service is not available on all networks.
+     * Visit https://greymass.com/en/fuel for more information.
+     */
+    disableGreymassFuel?: boolean
 }
 
 class Storage implements LinkStorage {
@@ -37,12 +45,14 @@ export default class BrowserTransport implements LinkTransport {
         this.classPrefix = options.classPrefix || 'anchor-link'
         this.injectStyles = !(options.injectStyles === false)
         this.requestStatus = !(options.requestStatus === false)
+        this.fuelEnabled = options.disableGreymassFuel !== true
         this.storage = new Storage(options.storagePrefix || 'anchor-link')
     }
 
     private classPrefix: string
     private injectStyles: boolean
     private requestStatus: boolean
+    private fuelEnabled: boolean
     private activeRequest?: SigningRequest
     private activeCancel?: (reason: string | Error) => void
     private containerEl!: HTMLElement
@@ -50,6 +60,16 @@ export default class BrowserTransport implements LinkTransport {
     private styleEl?: HTMLStyleElement
     private countdownTimer?: NodeJS.Timeout
     private closeTimer?: NodeJS.Timeout
+    private prepareStatusEl?: HTMLElement
+
+    private closeModal() {
+        this.hide()
+        if (this.activeCancel) {
+            this.activeRequest = undefined
+            this.activeCancel('Modal closed')
+            this.activeCancel = undefined
+        }
+    }
 
     private setupElements() {
         if (this.injectStyles && !this.styleEl) {
@@ -65,20 +85,21 @@ export default class BrowserTransport implements LinkTransport {
             this.containerEl.onclick = (event) => {
                 if (event.target === this.containerEl) {
                     event.stopPropagation()
-                    this.hide()
-                    if (this.activeCancel) {
-                        this.activeRequest = undefined
-                        this.activeCancel('Modal closed')
-                        this.activeCancel = undefined
-                    }
+                    this.closeModal()
                 }
             }
             document.body.appendChild(this.containerEl)
         }
         if (!this.requestEl) {
             let wrapper = this.createEl({class: 'inner'})
+            let closeButton = this.createEl({class: 'close'})
+            closeButton.onclick = (event) => {
+                event.stopPropagation()
+                this.closeModal()
+            }
             this.requestEl = this.createEl({class: 'request'})
             wrapper.appendChild(this.requestEl)
+            wrapper.appendChild(closeButton)
             this.containerEl.appendChild(wrapper)
         }
     }
@@ -134,10 +155,14 @@ export default class BrowserTransport implements LinkTransport {
         const subtitle = 'Scan the QR-code with your Anchor app.'
 
         const qrEl = this.createEl({class: 'qr'})
-        qrEl.innerHTML = await qrcode.toString(crossDeviceUri, {
-            margin: 0,
-            errorCorrectionLevel: 'L',
-        })
+        try {
+            qrEl.innerHTML = await qrcode.toString(crossDeviceUri, {
+                margin: 0,
+                errorCorrectionLevel: 'L',
+            })
+        } catch (error) {
+            console.warn('Unable to generate QR code', error)
+        }
 
         const linkEl = this.createEl({class: 'uri'})
         const linkA = this.createEl({
@@ -161,12 +186,59 @@ export default class BrowserTransport implements LinkTransport {
         actionEl.appendChild(qrEl)
         actionEl.appendChild(linkEl)
 
+        let footnoteEl: HTMLElement
+        if (isIdentity) {
+            footnoteEl = this.createEl({class: 'footnote', text: "Don't have Anchor? "})
+            const footnoteLink = this.createEl({
+                tag: 'a',
+                target: '_blank',
+                href: 'https://greymass.com/anchor',
+                text: 'Download Anchor app now',
+            })
+            footnoteEl.appendChild(footnoteLink)
+        } else {
+            footnoteEl = this.createEl({
+                class: 'footnote',
+                text: 'Anchor signing is brought to you by ',
+            })
+            const footnoteLink = this.createEl({
+                tag: 'a',
+                target: '_blank',
+                href: 'https://greymass.com',
+                text: 'Greymass',
+            })
+            footnoteEl.appendChild(footnoteLink)
+        }
+
         emptyElement(this.requestEl)
 
         const logoEl = this.createEl({class: 'logo'})
         this.requestEl.appendChild(logoEl)
         this.requestEl.appendChild(infoEl)
         this.requestEl.appendChild(actionEl)
+        this.requestEl.appendChild(footnoteEl)
+
+        this.show()
+    }
+
+    public async showLoading() {
+        this.setupElements()
+        emptyElement(this.requestEl)
+        const infoEl = this.createEl({class: 'info'})
+        const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Loading'})
+        const infoSubtitle = this.createEl({
+            class: 'subtitle',
+            tag: 'span',
+            text: 'Preparing request...',
+        })
+        this.prepareStatusEl = infoSubtitle
+
+        infoEl.appendChild(infoTitle)
+        infoEl.appendChild(infoSubtitle)
+
+        const logoEl = this.createEl({class: 'logo loading'})
+        this.requestEl.appendChild(logoEl)
+        this.requestEl.appendChild(infoEl)
 
         this.show()
     }
@@ -249,6 +321,30 @@ export default class BrowserTransport implements LinkTransport {
         }
     }
 
+    private updatePrepareStatus(message: string): void {
+        if (this.prepareStatusEl) {
+            this.prepareStatusEl.textContent = message
+        }
+    }
+
+    public async prepare(request: SigningRequest, session?: LinkSession) {
+        this.showLoading()
+        if (!this.fuelEnabled || !session || request.isIdentity()) {
+            // don't attempt to cosign id request or if we don't have a session attached
+            return request
+        }
+        try {
+            const result = fuel(request, session, this.updatePrepareStatus.bind(this))
+            const timeout = new Promise((r) => setTimeout(r, 3500)).then(() => {
+                throw new Error('Fuel API timeout after 3500ms')
+            })
+            return await Promise.race([result, timeout])
+        } catch (error) {
+            console.info(`Not applying fuel (${error.message})`)
+        }
+        return request
+    }
+
     public onSuccess(request: SigningRequest) {
         if (request === this.activeRequest) {
             this.clearTimers()
@@ -276,7 +372,7 @@ export default class BrowserTransport implements LinkTransport {
     }
 
     public onFailure(request: SigningRequest, error: Error) {
-        if (request === this.activeRequest) {
+        if (request === this.activeRequest && error['code'] !== 'E_CANCEL') {
             this.clearTimers()
             if (this.requestStatus) {
                 this.setupElements()
@@ -299,9 +395,6 @@ export default class BrowserTransport implements LinkTransport {
                 this.requestEl.appendChild(logoEl)
                 this.requestEl.appendChild(infoEl)
                 this.show()
-                this.closeTimer = setTimeout(() => {
-                    this.hide()
-                }, 5 * 1000)
             } else {
                 this.hide()
             }
