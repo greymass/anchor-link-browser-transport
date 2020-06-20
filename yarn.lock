@@ -259,10 +259,10 @@
   dependencies:
     "@types/node" "*"
 
-anchor-link@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/anchor-link/-/anchor-link-2.0.0.tgz#94427cf12dd63432d9bd2713a3f3fb78b23d7a17"
-  integrity sha512-kZupmZrJX1unyyU/mfQ+suKrEY7BlKMRzrInkx+2biHNNejez/yzUh29cA34VPhZp4AwlW2Y+KlC2Y4lDFgcuw==
+anchor-link@2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/anchor-link/-/anchor-link-2.1.1.tgz#ef78eca1a2e4d61da70badf85a4c25c4edca6269"
+  integrity sha512-u9iFJq3/gw6WGqLOUnl3w/ZO7v4ZOyflQwzqiHwMgTR24IqLclRaQI9aynH+6AJYo7bxoZPlQ74GF/3SAtRiFg==
   dependencies:
     eosio-signing-request "^1.2.0"
     eosjs "^20.0.0"
@@ -270,7 +270,7 @@ anchor-link@2.0.0:
     fetch-ponyfill "^6.1.0"
     isomorphic-ws "^4.0.1"
     pako "^1.0.10"
-    uuid "^8.0.0"
+    uuid "^8.1.0"
     ws "^7.2.5"
 
 ansi-regex@^4.1.0:
@@ -1261,7 +1261,7 @@ universalify@^0.1.0:
   resolved "https://registry.yarnpkg.com/universalify/-/universalify-0.1.2.tgz#b646f69be3942dabcecc9d6639c80dc105efaa66"
   integrity sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==
 
-uuid@^8.0.0:
+uuid@^8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.1.0.tgz#6f1536eb43249f473abc6bd58ff983da1ca30d8d"
   integrity sha512-CI18flHDznR0lq54xBycOVmphdCYnQLKn8abKn7PXUiKUGdEd+/l9LWNJmugXel4hXq7S+RMNl34ecyC9TntWg==
