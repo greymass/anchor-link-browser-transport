@@ -29,7 +29,7 @@ export async function fuel(
 ) {
     updatePrepareStatus('Detecting if Fuel is required.')
     const cloned = request.clone()
-    const chainId = cloned.getChainId().toLowerCase()
+    const chainId = cloned.getChainId().toString()
     const nodeUrl = supportedChains[chainId]
     if (!nodeUrl) {
         throw new Error('Chain does not support Fuel.')

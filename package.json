@@ -1,6 +1,6 @@
 {
   "name": "anchor-link-browser-transport",
-  "version": "2.1.2",
+  "version": "3.0.0-beta1",
   "description": "Vanilla JS browser transport for Anchor Link",
   "license": "MIT",
   "main": "lib/index.es5.js",
@@ -19,7 +19,7 @@
     "qrcode": "^1.4.4"
   },
   "peerDependencies": {
-    "anchor-link": "^2.1.1"
+    "anchor-link": "next"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",
@@ -30,8 +30,8 @@
     "@types/node": "^13.9.0",
     "@types/qrcode": "^1.3.4",
     "@types/ws": "^7.2.2",
-    "anchor-link": "2.1.1",
-    "eosio-signing-request": "^1.2.0",
+    "anchor-link": "next",
+    "eosio-signing-request": "next",
     "prettier": "^2.0.2",
     "rollup": "^2.3.2",
     "rollup-plugin-node-polyfills": "^0.2.1",
