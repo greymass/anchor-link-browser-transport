@@ -111,6 +111,9 @@ export default class BrowserTransport implements LinkTransport {
             for (const attr of Object.keys(attrs)) {
                 const value = attrs[attr]
                 switch (attr) {
+                    case 'src':
+                        el.setAttribute(attr, value)
+                        break
                     case 'tag':
                         break
                     case 'text':
@@ -172,9 +175,16 @@ export default class BrowserTransport implements LinkTransport {
         })
         linkA.addEventListener('click', (event) => {
             event.preventDefault()
-            window.location.href = sameDeviceUri
+            iframe.setAttribute('src', sameDeviceUri)
         })
         linkEl.appendChild(linkA)
+
+        const iframe = this.createEl({
+            class: 'wskeepalive',
+            src: 'about:blank',
+            tag: 'iframe',
+        })
+        linkEl.appendChild(iframe)
 
         const infoEl = this.createEl({class: 'info'})
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: title})
