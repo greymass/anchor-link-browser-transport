@@ -158,6 +158,10 @@ export default `
     color: white;
 }
 
+.%prefix%-wskeepalive {
+    display: none;
+}
+
 
 
 @media (prefers-color-scheme: dark) {
