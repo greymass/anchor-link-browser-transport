@@ -19,7 +19,7 @@
     "qrcode": "^1.4.4"
   },
   "peerDependencies": {
-    "anchor-link": "next"
+    "anchor-link": "3.0.0-beta15"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",
@@ -30,8 +30,8 @@
     "@types/node": "^13.9.0",
     "@types/qrcode": "^1.3.4",
     "@types/ws": "^7.2.2",
-    "anchor-link": "next",
-    "eosio-signing-request": "next",
+    "anchor-link": "3.0.0-beta15",
+    "eosio-signing-request": "2.0.0-beta11",
     "prettier": "^2.0.2",
     "rollup": "^2.3.2",
     "rollup-plugin-node-polyfills": "^0.2.1",
