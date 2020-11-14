@@ -76,6 +76,7 @@ export default class BrowserTransport implements LinkTransport {
     private countdownTimer?: NodeJS.Timeout
     private closeTimer?: NodeJS.Timeout
     private prepareStatusEl?: HTMLElement
+    private expireTimer?: NodeJS.Timeout
 
     private closeModal() {
         this.hide()
@@ -367,6 +368,71 @@ export default class BrowserTransport implements LinkTransport {
         }
     }
 
+    public async showFee(request: SigningRequest, fee: string) {
+        this.activeRequest = request
+        this.setupElements()
+        emptyElement(this.requestEl)
+        const feeEl = this.createEl({class: 'fee'})
+
+        const feeTitle = this.createEl({class: 'title', tag: 'div', text: 'Transaction Fee'})
+        const feeSubtitle = this.createEl({
+            class: 'subtitle',
+            tag: 'span',
+            text: `Your account is out of resources and no free transactions are currently available.`,
+        })
+        const feeDescription = this.createEl({
+            class: 'subtitle',
+            tag: 'span',
+            text: `If you would like to proceed, a fee will be added to cover the resource costs of this transaction.`,
+        })
+        feeEl.appendChild(feeTitle)
+        feeEl.appendChild(feeSubtitle)
+        feeEl.appendChild(feeDescription)
+
+        const logoEl = this.createEl({class: 'fuel'})
+        this.requestEl.appendChild(logoEl)
+        this.requestEl.appendChild(feeEl)
+
+        const choiceEl = this.createEl({class: 'choice'})
+        const confirmEl = this.createEl({tag: 'a', text: `Accept Fee of ${fee}`})
+        const expireEl = this.createEl({tag: 'span', text: 'Offer expires in --:--'})
+        choiceEl.appendChild(expireEl)
+        choiceEl.appendChild(confirmEl)
+        feeEl.appendChild(choiceEl)
+
+        const expires = this.getExpiration(request)
+        const updateExpiration = setInterval(() => {
+            const timeLeft = expires - Date.now()
+            const timeFormatted =
+                timeLeft > 0 ? new Date(timeLeft).toISOString().substr(14, 5) : '00:00'
+            expireEl.textContent = `Offer expires in ${timeFormatted}`
+            if (timeLeft <= 0) {
+                this.onFailure(request, new ExpireError())
+                clearInterval(updateExpiration)
+            }
+        }, 200)
+        this.expireTimer = updateExpiration
+
+        const footnoteEl = this.createEl({
+            class: 'footnote',
+            text: 'Resources offered by ',
+        })
+        const footnoteLink = this.createEl({
+            tag: 'a',
+            target: '_blank',
+            href: 'https://greymass.com/en/fuel',
+            text: 'Greymass Fuel',
+        })
+        footnoteEl.appendChild(footnoteLink)
+        this.requestEl.appendChild(footnoteEl)
+
+        this.show()
+
+        const accepted = await awaitUser(confirmEl, true, this.expireTimer)
+        clearInterval(this.expireTimer)
+        return accepted
+    }
+
     public async prepare(request: SigningRequest, session?: LinkSession) {
         this.showLoading()
         if (!this.fuelEnabled || !session || request.isIdentity()) {
@@ -383,7 +449,15 @@ export default class BrowserTransport implements LinkTransport {
             const timeout = new Promise((r) => setTimeout(r, 3500)).then(() => {
                 throw new Error('Fuel API timeout after 3500ms')
             })
-            return await Promise.race([result, timeout])
+            const modified = await Promise.race([result, timeout])
+            const info = modified.getInfo()
+            if (info.fuel_fee) {
+                const accept = await this.showFee(modified, info.fuel_fee)
+                if (accept) {
+                    return modified
+                }
+            }
+            return modified
         } catch (error) {
             console.info(`Not applying fuel (${error.message})`)
         }
@@ -449,6 +523,16 @@ export default class BrowserTransport implements LinkTransport {
     }
 }
 
+function awaitUser(el, value, expireTimer: NodeJS.Timeout) {
+    return new Promise(function (resolve, reject) {
+        var listener = event => {
+            el.removeEventListener('click', listener);
+            clearInterval(expireTimer)
+            resolve(value)
+        };
+        el.addEventListener('click', listener);
+    });
+}
 function emptyElement(el: HTMLElement) {
     while (el.firstChild) {
         el.removeChild(el.firstChild)

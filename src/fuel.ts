@@ -41,6 +41,9 @@ export async function fuel(
         signer: session.auth,
     })
     if (result.data.signatures[0]) {
+        if (result.code === 402) {
+            cloned.setInfoKey('fuel_fee', result.data.fee)
+        }
         cloned.setInfoKey('fuel_sig', result.data.signatures[0])
     } else {
         throw new Error('No signature returned from Fuel')
