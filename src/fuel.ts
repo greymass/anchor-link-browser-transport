@@ -48,6 +48,14 @@ export async function fuel(
     } else {
         throw new Error('No signature returned from Fuel')
     }
-    cloned.data.req = result.data.request
+    // hack so we don't have to bundle the ESR lib with the transport
+    const SR = request.constructor as typeof SigningRequest
+    // ok to mutate request here, prependAction took a copy
+    cloned.data.req = (
+        await SR.create(
+            {transaction: result.data.request[1]},
+            {abiProvider: (request as any).abiProvider}
+        )
+    ).data.req
     return cloned
 }
