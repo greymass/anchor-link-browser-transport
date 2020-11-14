@@ -25,7 +25,8 @@ async function apiCall(url: string, body?: any) {
 export async function fuel(
     request: SigningRequest,
     session: LinkSession,
-    updatePrepareStatus: (message: string) => void
+    updatePrepareStatus: (message: string) => void,
+    fuelReferrer: string = 'teamgreymass'
 ) {
     updatePrepareStatus('Detecting if Fuel is required.')
     const cloned = request.clone()
@@ -35,6 +36,7 @@ export async function fuel(
         throw new Error('Chain does not support Fuel.')
     }
     const result = await apiCall(nodeUrl + '/v1/cosigner/sign', {
+        ref: fuelReferrer,
         request: cloned,
         signer: session.auth,
     })
