@@ -44,6 +44,13 @@ class Storage implements LinkStorage {
     }
 }
 
+export class ExpireError extends Error {
+    public code = 'E_EXPIRE'
+    constructor(reason?: string) {
+        super(`Transaction expired ${reason ? '(' + reason + ')' : ''}`)
+    }
+}
+
 export default class BrowserTransport implements LinkTransport {
     storage: LinkStorage
 
@@ -296,16 +303,16 @@ export default class BrowserTransport implements LinkTransport {
         const timeout = session.metadata.timeout || 60 * 1000 * 2
         const deviceName = session.metadata.name
 
-        const start = Date.now()
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Sign'})
+        const expires = this.getExpiration(request, timeout)
 
         const updateCountdown = () => {
-            const timeLeft = timeout + start - Date.now()
+            const timeLeft = expires - Date.now()
             const timeFormatted =
                 timeLeft > 0 ? new Date(timeLeft).toISOString().substr(14, 5) : '00:00'
             infoTitle.textContent = `Sign - ${timeFormatted}`
         }
-        this.countdownTimer = setInterval(updateCountdown, 500)
+        this.countdownTimer = setInterval(updateCountdown, 200)
         updateCountdown()
 
         const infoEl = this.createEl({class: 'info'})
@@ -341,6 +348,17 @@ export default class BrowserTransport implements LinkTransport {
             clearTimeout(this.countdownTimer)
             this.countdownTimer = undefined
         }
+    }
+
+    getExpiration(request: SigningRequest, timeout: number = 0) {
+        // Get expiration of the transaction
+        const { expiration } = request.getRawTransaction()
+        const parsed = Date.parse(`${expiration}z`)
+        // If no expiration is present, use the timeout on the session
+        if (parsed <= 0) {
+            return Date.now() + timeout
+        }
+        return parsed
     }
 
     private updatePrepareStatus(message: string): void {
@@ -425,6 +443,8 @@ export default class BrowserTransport implements LinkTransport {
             } else {
                 this.hide()
             }
+        } else {
+            this.hide()
         }
     }
 }
