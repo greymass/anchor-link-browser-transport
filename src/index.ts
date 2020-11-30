@@ -171,7 +171,7 @@ export default class BrowserTransport implements LinkTransport {
 
         const isIdentity = request.isIdentity()
         const title = isIdentity ? 'Login' : 'Sign'
-        const subtitle = 'Scan the QR-code with your Anchor app.'
+        const subtitle = 'Scan the QR-code above with your Anchor mobile app or click the button below to open Anchor on this device.'
 
         const qrEl = this.createEl({class: 'qr'})
         try {
@@ -208,12 +208,13 @@ export default class BrowserTransport implements LinkTransport {
 
         const infoEl = this.createEl({class: 'info'})
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: title})
-        const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
         infoEl.appendChild(infoTitle)
-        infoEl.appendChild(infoSubtitle)
 
         const actionEl = this.createEl({class: 'actions'})
         actionEl.appendChild(qrEl)
+
+        const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
+        actionEl.appendChild(infoSubtitle)
         actionEl.appendChild(linkEl)
 
         let footnoteEl: HTMLElement
@@ -223,7 +224,7 @@ export default class BrowserTransport implements LinkTransport {
                 tag: 'a',
                 target: '_blank',
                 href: 'https://greymass.com/anchor',
-                text: 'Download Anchor app now',
+                text: 'Download now',
             })
             footnoteEl.appendChild(footnoteLink)
         } else {
@@ -301,7 +302,7 @@ export default class BrowserTransport implements LinkTransport {
         this.activeCancel = cancel
         this.setupElements()
 
-        const timeout = session.metadata.timeout || 60 * 1000 * 2
+        const timeout = session.metadata.timeout || 60 * 1000 * 5
         const deviceName = session.metadata.name
 
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Sign'})
@@ -321,7 +322,7 @@ export default class BrowserTransport implements LinkTransport {
 
         let subtitle: string
         if (deviceName && deviceName.length > 0) {
-            subtitle = `Please open Anchor app on “${deviceName}” to review and sign the transaction.`
+            subtitle = `Please open your Anchor Wallet on your device “${deviceName}” to review and sign the transaction.`
         } else {
             subtitle = 'Please review and sign the transaction in the linked wallet.'
         }
@@ -354,7 +355,7 @@ export default class BrowserTransport implements LinkTransport {
     getExpiration(request: SigningRequest, timeout: number = 0) {
         // Get expiration of the transaction
         const { expiration } = request.getRawTransaction()
-        const parsed = Date.parse(`${expiration}z`)
+        const parsed = Date.parse(`${expiration.toString()}z`)
         // If no expiration is present, use the timeout on the session
         if (parsed <= 0) {
             return Date.now() + timeout
@@ -473,7 +474,7 @@ export default class BrowserTransport implements LinkTransport {
                 const logoEl = this.createEl({class: 'logo'})
                 logoEl.classList.add('success')
                 const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Success!'})
-                const subtitle = request.isIdentity() ? 'Identity signed.' : 'Transaction signed.'
+                const subtitle = request.isIdentity() ? 'Login completed.' : 'Transaction signed.'
                 const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
                 infoEl.appendChild(infoTitle)
                 infoEl.appendChild(infoSubtitle)
@@ -501,7 +502,7 @@ export default class BrowserTransport implements LinkTransport {
                 const infoTitle = this.createEl({
                     class: 'title',
                     tag: 'span',
-                    text: 'Transaction error',
+                    text: 'Transaction Error',
                 })
                 const infoSubtitle = this.createEl({
                     class: 'subtitle',
