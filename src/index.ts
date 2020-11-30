@@ -308,14 +308,17 @@ export default class BrowserTransport implements LinkTransport {
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Sign'})
         const expires = this.getExpiration(request, timeout)
 
-        const updateCountdown = () => {
+        const updateCountdown = setInterval(() => {
             const timeLeft = expires - Date.now()
             const timeFormatted =
                 timeLeft > 0 ? new Date(timeLeft).toISOString().substr(14, 5) : '00:00'
             infoTitle.textContent = `Sign - ${timeFormatted}`
-        }
-        this.countdownTimer = setInterval(updateCountdown, 200)
-        updateCountdown()
+            if (timeLeft <= 0) {
+                this.onFailure(request, new ExpireError())
+                clearInterval(updateCountdown)
+            }
+        }, 200)
+        this.countdownTimer = updateCountdown
 
         const infoEl = this.createEl({class: 'info'})
         infoEl.appendChild(infoTitle)
