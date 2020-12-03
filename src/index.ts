@@ -1,5 +1,4 @@
-import {LinkSession, LinkStorage, LinkTransport} from 'anchor-link'
-import {SigningRequest} from 'eosio-signing-request'
+import {LinkSession, LinkStorage, LinkTransport, SigningRequest} from 'anchor-link'
 import styleText from './styles'
 import generateQr from './qrcode'
 
@@ -44,7 +43,7 @@ class Storage implements LinkStorage {
     }
 }
 
-export class ExpireError extends Error {
+class ExpireError extends Error {
     public code = 'E_EXPIRE'
     constructor(reason?: string) {
         super(`Transaction expired ${reason ? '(' + reason + ')' : ''}`)
