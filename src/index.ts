@@ -1,7 +1,7 @@
 import {LinkSession, LinkStorage, LinkTransport} from 'anchor-link'
 import {SigningRequest} from 'eosio-signing-request'
-import * as qrcode from 'qrcode'
 import styleText from './styles'
+import generateQr from './qrcode'
 
 import {fuel} from './fuel'
 
@@ -175,10 +175,7 @@ export default class BrowserTransport implements LinkTransport {
 
         const qrEl = this.createEl({class: 'qr'})
         try {
-            qrEl.innerHTML = await qrcode.toString(crossDeviceUri, {
-                margin: 0,
-                errorCorrectionLevel: 'L',
-            })
+            qrEl.innerHTML = generateQr(crossDeviceUri)
         } catch (error) {
             console.warn('Unable to generate QR code', error)
         }

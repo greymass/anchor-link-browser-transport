@@ -159,6 +159,12 @@ export default `
 
 .%prefix%-qr svg {
     width: 100%;
+    display: block;
+    shape-rendering: crispEdges;
+}
+
+.%prefix%-qr svg rect {
+    fill: black;
 }
 
 .%prefix%-footnote {
@@ -189,7 +195,6 @@ export default `
     margin-top: 1em;
 }
 
-
 @media (prefers-color-scheme: dark) {
     .%prefix%-inner {
         background: #262D43;
@@ -204,11 +209,8 @@ export default `
     .%prefix%-subtitle {
         color: #B8C0DA;
     }
-    .%prefix%-qr svg path {
-        fill: #131B33;
-    }
-    .%prefix%-qr svg path:last-child {
-        stroke: white;
+    .%prefix%-qr svg rect {
+        fill: white;
     }
     .%prefix%-choice a,
     .%prefix%-uri a {
