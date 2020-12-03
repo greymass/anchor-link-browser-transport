@@ -1,5 +1,5 @@
-import {LinkSession} from 'anchor-link'
-import {SigningRequest} from 'eosio-signing-request'
+import type {LinkSession} from 'anchor-link'
+import {Signature, SigningRequest} from 'anchor-link'
 
 const supportedChains = {
     'aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906':
@@ -29,30 +29,27 @@ export async function fuel(
     fuelReferrer: string = 'teamgreymass'
 ) {
     updatePrepareStatus('Detecting if Fuel is required.')
-    const cloned = request.clone()
-    const chainId = cloned.getChainId().toString()
-    const nodeUrl = supportedChains[chainId]
+    const chainId = request.getChainId()
+    const nodeUrl = supportedChains[String(chainId)]
     if (!nodeUrl) {
         throw new Error('Chain does not support Fuel.')
     }
     const result = await apiCall(nodeUrl + '/v1/cosigner/sign', {
         ref: fuelReferrer,
-        request: cloned,
+        request,
         signer: session.auth,
     })
+    const cloned = request.clone()
     if (result.data.signatures[0]) {
         if (result.code === 402) {
             cloned.setInfoKey('fuel_fee', result.data.fee)
         }
-        cloned.setInfoKey('fuel_sig', result.data.signatures[0])
+        cloned.setInfoKey('cosig', Signature.from(result.data.signatures[0]))
     } else {
         throw new Error('No signature returned from Fuel')
     }
-    // hack so we don't have to bundle the ESR lib with the transport
-    const SR = request.constructor as typeof SigningRequest
-    // ok to mutate request here, prependAction took a copy
     cloned.data.req = (
-        await SR.create(
+        await SigningRequest.create(
             {transaction: result.data.request[1]},
             {abiProvider: (request as any).abiProvider}
         )
