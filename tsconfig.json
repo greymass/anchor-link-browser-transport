@@ -2,6 +2,7 @@
     "compilerOptions": {
         "downlevelIteration": true,
         "esModuleInterop": true,
+        "importHelpers": true,
         "lib": ["esnext", "dom"],
         "module": "esnext",
         "moduleResolution": "node",
