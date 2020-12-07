@@ -450,7 +450,7 @@ export default class BrowserTransport implements LinkTransport {
                 throw new Error('Fuel API timeout after 3500ms')
             })
             const modified = await Promise.race([result, timeout])
-            const fee = modified.getInfoKey('txfee', 'string')
+            const fee = modified.getInfoKey('fuel_fee', 'string')
             if (fee) {
                 const accept = await this.showFee(modified, String(fee))
                 if (accept) {
