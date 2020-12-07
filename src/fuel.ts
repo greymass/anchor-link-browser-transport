@@ -52,7 +52,7 @@ export async function fuel(
     const cloned = request.clone()
     // Set the required fee onto the request for signature providers
     if (result.code === 402) {
-        cloned.setInfoKey('fuel_fee', result.data.fee)
+        cloned.setInfoKey('txfee', result.data.fee)
     }
     // Set the cosigner signature onto the request for signature providers
     cloned.setInfoKey('cosig', Signature.from(result.data.signatures[0]))
