@@ -59,7 +59,7 @@ export async function fuel(
     // Modify the request based on the response from the API
     cloned.data.req = (
         await SigningRequest.create(
-            {transaction: result.data.request[1]},
+            {transaction: {...result.data.request[1]}},
             {abiProvider: (request as any).abiProvider}
         )
     ).data.req
