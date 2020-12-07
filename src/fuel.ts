@@ -34,7 +34,7 @@ export async function fuel(
     if (!nodeUrl) {
         throw new Error('Chain does not support Fuel.')
     }
-    const result = await apiCall(nodeUrl + '/v1/cosigner/sign', {
+    const result = await apiCall(nodeUrl + '/v1/resource_provider/sign_transaction', {
         ref: fuelReferrer,
         request,
         signer: session.auth,
