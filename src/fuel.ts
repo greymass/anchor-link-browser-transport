@@ -39,15 +39,24 @@ export async function fuel(
         request,
         signer: session.auth,
     })
-    const cloned = request.clone()
-    if (result.data.signatures[0]) {
-        if (result.code === 402) {
-            cloned.setInfoKey('fuel_fee', result.data.fee)
-        }
-        cloned.setInfoKey('cosig', Signature.from(result.data.signatures[0]))
-    } else {
-        throw new Error('No signature returned from Fuel')
+    if (!result || !result.data) {
+        throw new Error('Invalid response from cosigner.')
     }
+    if (!result.data.signatures || !result.data.signatures[0]) {
+        throw new Error('No signature returned from cosigner.')
+    }
+    if (result.code === 402 && !result.data.fee) {
+        throw new Error('Returned response indicating required payment, but provided no fee amount.')
+    }
+    // Clone the request for modification
+    const cloned = request.clone()
+    // Set the required fee onto the request for signature providers
+    if (result.code === 402) {
+        cloned.setInfoKey('fuel_fee', result.data.fee)
+    }
+    // Set the cosigner signature onto the request for signature providers
+    cloned.setInfoKey('cosig', Signature.from(result.data.signatures[0]))
+    // Modify the request based on the response from the API
     cloned.data.req = (
         await SigningRequest.create(
             {transaction: result.data.request[1]},
