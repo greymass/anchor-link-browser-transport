@@ -353,7 +353,7 @@ export default class BrowserTransport implements LinkTransport {
 
     getExpiration(request: SigningRequest, timeout: number = 0) {
         // Get expiration of the transaction
-        const { expiration } = request.getRawTransaction()
+        const { expiration } = request.data.req
         const parsed = Date.parse(`${expiration.toString()}z`)
         // If no expiration is present, use the timeout on the session
         if (parsed <= 0) {

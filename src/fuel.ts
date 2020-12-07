@@ -62,6 +62,6 @@ export async function fuel(
             {transaction: result.data.request[1]},
             {abiProvider: (request as any).abiProvider}
         )
-    ).data.req
+    ).data.req.value
     return cloned
 }
