@@ -12,20 +12,15 @@ interface Rect {
  * Generate QR SVG
  * @author Johan Nordberg <code@johan-nordberg.com>
  */
-export default function generate(
-    text: string,
-    level: 'L' | 'M' | 'Q' | 'H' = 'L',
-    version: number = -1
-) {
-    let qr = new QRCode(version, ErrorCorrectLevel[level])
-    let size: number
-    let rects: Rect[] = []
+export default function generate(text: string, level: 'L' | 'M' | 'Q' | 'H' = 'L', version = -1) {
+    const qr = new QRCode(version, ErrorCorrectLevel[level])
+    const rects: Rect[] = []
 
     qr.addData(text)
     qr.make()
 
     const rows = qr.modules
-    size = rows.length
+    const size = rows.length
 
     for (const [y, row] of rows.entries()) {
         let rect: Rect | undefined
@@ -45,7 +40,7 @@ export default function generate(
         }
     }
 
-    let svg: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">`]
+    const svg: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">`]
     for (const {x, y, width, height} of rects) {
         svg.push(`<rect x="${x}" y="${y}" width="${width}" height="${height}" />`)
     }

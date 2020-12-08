@@ -62,7 +62,7 @@ const QRUtil = {
     G15_MASK: (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1),
 
     getBCHTypeInfo: function (data) {
-        var d = data << 10
+        let d = data << 10
         while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
             d ^= QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15))
         }
@@ -70,7 +70,7 @@ const QRUtil = {
     },
 
     getBCHTypeNumber: function (data) {
-        var d = data << 12
+        let d = data << 12
         while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
             d ^= QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18))
         }
@@ -78,7 +78,7 @@ const QRUtil = {
     },
 
     getBCHDigit: function (data) {
-        var digit = 0
+        let digit = 0
 
         while (data != 0) {
             digit++
@@ -117,9 +117,9 @@ const QRUtil = {
     },
 
     getErrorCorrectPolynomial: function (errorCorrectLength) {
-        var a = new Polynomial([1], 0)
+        let a = new Polynomial([1], 0)
 
-        for (var i = 0; i < errorCorrectLength; i++) {
+        for (let i = 0; i < errorCorrectLength; i++) {
             a = a.multiply(new Polynomial([1, math.gexp(i)], 0))
         }
 
@@ -178,23 +178,23 @@ const QRUtil = {
     },
 
     getLostPoint: function (qrCode) {
-        var moduleCount = qrCode.getModuleCount()
+        const moduleCount = qrCode.getModuleCount()
 
-        var lostPoint = 0
+        let lostPoint = 0
 
         // LEVEL1
 
-        for (var row = 0; row < moduleCount; row++) {
-            for (var col = 0; col < moduleCount; col++) {
-                var sameCount = 0
-                var dark = qrCode.isDark(row, col)
+        for (let row = 0; row < moduleCount; row++) {
+            for (let col = 0; col < moduleCount; col++) {
+                let sameCount = 0
+                const dark = qrCode.isDark(row, col)
 
-                for (var r = -1; r <= 1; r++) {
+                for (let r = -1; r <= 1; r++) {
                     if (row + r < 0 || moduleCount <= row + r) {
                         continue
                     }
 
-                    for (var c = -1; c <= 1; c++) {
+                    for (let c = -1; c <= 1; c++) {
                         if (col + c < 0 || moduleCount <= col + c) {
                             continue
                         }
@@ -217,9 +217,9 @@ const QRUtil = {
 
         // LEVEL2
 
-        for (var row = 0; row < moduleCount - 1; row++) {
-            for (var col = 0; col < moduleCount - 1; col++) {
-                var count = 0
+        for (let row = 0; row < moduleCount - 1; row++) {
+            for (let col = 0; col < moduleCount - 1; col++) {
+                let count = 0
                 if (qrCode.isDark(row, col)) count++
                 if (qrCode.isDark(row + 1, col)) count++
                 if (qrCode.isDark(row, col + 1)) count++
@@ -232,8 +232,8 @@ const QRUtil = {
 
         // LEVEL3
 
-        for (var row = 0; row < moduleCount; row++) {
-            for (var col = 0; col < moduleCount - 6; col++) {
+        for (let row = 0; row < moduleCount; row++) {
+            for (let col = 0; col < moduleCount - 6; col++) {
                 if (
                     qrCode.isDark(row, col) &&
                     !qrCode.isDark(row, col + 1) &&
@@ -248,8 +248,8 @@ const QRUtil = {
             }
         }
 
-        for (var col = 0; col < moduleCount; col++) {
-            for (var row = 0; row < moduleCount - 6; row++) {
+        for (let col = 0; col < moduleCount; col++) {
+            for (let row = 0; row < moduleCount - 6; row++) {
                 if (
                     qrCode.isDark(row, col) &&
                     !qrCode.isDark(row + 1, col) &&
@@ -266,17 +266,17 @@ const QRUtil = {
 
         // LEVEL4
 
-        var darkCount = 0
+        let darkCount = 0
 
-        for (var col = 0; col < moduleCount; col++) {
-            for (var row = 0; row < moduleCount; row++) {
+        for (let col = 0; col < moduleCount; col++) {
+            for (let row = 0; row < moduleCount; row++) {
                 if (qrCode.isDark(row, col)) {
                     darkCount++
                 }
             }
         }
 
-        var ratio = Math.abs((100 * darkCount) / moduleCount / moduleCount - 50) / 5
+        const ratio = Math.abs((100 * darkCount) / moduleCount / moduleCount - 50) / 5
         lostPoint += ratio * 10
 
         return lostPoint
