@@ -9,7 +9,7 @@ lib: ${SRC_FILES} package.json tsconfig.json node_modules rollup.config.js
 
 .PHONY: lint
 lint: node_modules
-	@NODE_ENV=test ./node_modules/.bin/tslint -p tsconfig.json -c tslint.json -t stylish --fix
+	@eslint src --ext .ts --fix
 
 node_modules:
 	yarn install --non-interactive --frozen-lockfile --ignore-scripts
