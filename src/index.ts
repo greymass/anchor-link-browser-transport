@@ -1,4 +1,11 @@
-import {LinkSession, LinkStorage, LinkTransport, SigningRequest} from 'anchor-link'
+import {
+    APIError,
+    isInstanceOf,
+    LinkSession,
+    LinkStorage,
+    LinkTransport,
+    SigningRequest,
+} from 'anchor-link'
 import styleText from './styles'
 import generateQr from './qrcode'
 
@@ -503,10 +510,22 @@ export default class BrowserTransport implements LinkTransport {
                     tag: 'span',
                     text: 'Transaction Error',
                 })
+                let errorMessage: string
+                if (isInstanceOf(error, APIError)) {
+                    if (error.name === 'eosio_assert_message_exception') {
+                        errorMessage = error.details[0].message
+                    } else if (error.details.length > 0) {
+                        errorMessage = error.details.map((d) => d.message).join('\n')
+                    } else {
+                        errorMessage = error.message
+                    }
+                } else {
+                    errorMessage = error.message || String(error)
+                }
                 const infoSubtitle = this.createEl({
                     class: 'subtitle',
                     tag: 'span',
-                    text: error.message || String(error),
+                    text: errorMessage,
                 })
                 infoEl.appendChild(infoTitle)
                 infoEl.appendChild(infoSubtitle)
