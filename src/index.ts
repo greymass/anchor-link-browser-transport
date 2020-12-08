@@ -113,8 +113,8 @@ export default class BrowserTransport implements LinkTransport {
             document.body.appendChild(this.containerEl)
         }
         if (!this.requestEl) {
-            let wrapper = this.createEl({class: 'inner'})
-            let closeButton = this.createEl({class: 'close'})
+            const wrapper = this.createEl({class: 'inner'})
+            const closeButton = this.createEl({class: 'close'})
             closeButton.onclick = (event) => {
                 event.stopPropagation()
                 this.closeModal()
@@ -168,16 +168,17 @@ export default class BrowserTransport implements LinkTransport {
     private async displayRequest(request: SigningRequest) {
         this.setupElements()
 
-        let sameDeviceRequest = request.clone()
+        const sameDeviceRequest = request.clone()
         sameDeviceRequest.setInfoKey('same_device', true)
         sameDeviceRequest.setInfoKey('return_path', returnUrl())
 
-        let sameDeviceUri = sameDeviceRequest.encode(true, false)
-        let crossDeviceUri = request.encode(true, false)
+        const sameDeviceUri = sameDeviceRequest.encode(true, false)
+        const crossDeviceUri = request.encode(true, false)
 
         const isIdentity = request.isIdentity()
         const title = isIdentity ? 'Login' : 'Sign'
-        const subtitle = 'Scan the QR-code above with your Anchor mobile app or click the button below to open Anchor on this device.'
+        const subtitle =
+            'Scan the QR-code above with your Anchor mobile app or click the button below to open Anchor on this device.'
 
         const qrEl = this.createEl({class: 'qr'})
         try {
@@ -358,9 +359,9 @@ export default class BrowserTransport implements LinkTransport {
         }
     }
 
-    getExpiration(request: SigningRequest, timeout: number = 0) {
+    getExpiration(request: SigningRequest, timeout = 0) {
         // Get expiration of the transaction
-        const { expiration } = request.getRawTransaction()
+        const {expiration} = request.getRawTransaction()
         const parsed = Date.parse(`${expiration.toString()}z`)
         // If no expiration is present, use the timeout on the session
         if (parsed <= 0) {
@@ -544,13 +545,13 @@ export default class BrowserTransport implements LinkTransport {
 
 function awaitUser(el, value, expireTimer: NodeJS.Timeout) {
     return new Promise(function (resolve, reject) {
-        var listener = event => {
-            el.removeEventListener('click', listener);
+        var listener = (event) => {
+            el.removeEventListener('click', listener)
             clearInterval(expireTimer)
             resolve(value)
-        };
-        el.addEventListener('click', listener);
-    });
+        }
+        el.addEventListener('click', listener)
+    })
 }
 function emptyElement(el: HTMLElement) {
     while (el.firstChild) {
