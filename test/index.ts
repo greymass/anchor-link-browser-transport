@@ -1,17 +1,31 @@
-import {Link, LinkSession} from 'anchor-link'
-import {abi, ChainName} from 'eosio-signing-request'
-import BrowserTransport from '../src'
+/* eslint-disable no-console */
+
+import {AnyAction} from 'anchor-link'
+import Link from 'anchor-link'
+
+import BrowserTransport from './transport'
+
+const appId = 'trans.test'
+
+const transport = new BrowserTransport()
 
 const link = new Link({
-    chainId: ChainName.JUNGLE,
-    transport: new BrowserTransport(),
-    rpc: 'https://jungle.greymass.com',
+    chainId: '2a02a0053e5a8cf73a56ba0fda11e4d92e0238a4a2aa74fccf46d5a910746840',
+    transport,
+    client: 'https://jungle3.greymass.com',
     service: 'https://link.dirty.fish',
 })
 
-function loggedIn(session: LinkSession) {
-    const app = document.getElementById('app')
+async function main() {
+    let session = await link.restoreSession(appId)
+    if (!session) {
+        const result = await link.login(appId)
+        console.log('logged in', result.account)
+        session = result.session
+    }
+    console.log('session', session)
 
+    const app = document.getElementById('app')
     app.innerHTML = `
         Logged in as <b>${session.auth.actor}@${session.auth.permission}</b><br>
         <hr>
@@ -23,8 +37,10 @@ function loggedIn(session: LinkSession) {
     const logoutButton = document.createElement('button')
     logoutButton.textContent = '🦞 log out'
     logoutButton.onclick = () => {
-        removeSession()
-        app.innerHTML = 'Logged out, refresh page to login again'
+        app.innerHTML = 'Logging out...'
+        session.remove().then(() => {
+            app.innerHTML = 'Logged out, refresh page to login again'
+        })
     }
 
     const fuelCheck = document.createElement('input')
@@ -40,7 +56,7 @@ function loggedIn(session: LinkSession) {
     actionButton.textContent = '💰 teamgreymass'
     actionButton.onclick = () => {
         actionButton.disabled = true
-        let actions: abi.Action[] = [
+        const actions: AnyAction[] = [
             {
                 account: 'eosio.token',
                 name: 'transfer',
@@ -67,12 +83,9 @@ function loggedIn(session: LinkSession) {
             })
         }
         session
-            .transact({
-                actions,
-                broadcast: true,
-            })
+            .transact({actions}, {broadcast: true})
             .then((result) => {
-                console.log(result.processed)
+                console.log('tx', result.processed)
                 const {id} = result.processed
                 log.innerHTML += `
                     Transaction sent!
@@ -99,47 +112,9 @@ function loggedIn(session: LinkSession) {
     actions.appendChild(document.createElement('br'))
 }
 
-function restoreSession(): LinkSession | undefined {
-    console.log(LinkSession)
-    console.log(LinkSession.restore)
-    try {
-        const stored = localStorage.getItem('link_session')
-        if (stored) {
-            const data = JSON.parse(stored)
-            console.log(data)
-            return LinkSession.restore(link, data)
-        }
-    } catch (error) {
-        console.log('unable to restore session', error)
-    }
-}
-
-function storeSession(session: LinkSession) {
-    const data = session.serialize()
-    localStorage.setItem('link_session', JSON.stringify(data))
-}
-
-function removeSession() {
-    localStorage.removeItem('link_session')
-}
-
-function main() {
-    let session = restoreSession()
-    if (session) {
-        console.log('restored', session)
-        loggedIn(session)
-        return
-    }
-    link.login('dubmledore')
-        .then(({account, session}) => {
-            console.log('logged in', account)
-            storeSession(session)
-            loggedIn(session)
-        })
-        .catch((error) => {
-            console.error('login error', error)
-            document.querySelector('#app')!.innerHTML = error.message || String(error)
-        })
-}
-
-window.addEventListener('DOMContentLoaded', main)
+window.addEventListener('DOMContentLoaded', () => {
+    main().catch((error) => {
+        console.error(error)
+        document.querySelector('#app')!.innerHTML = error.message || String(error)
+    })
+})
