@@ -116,6 +116,7 @@ export default `
     color: #5C5C5C;
     text-align: center;
     line-height: 1.3;
+    word-break: break-word;
 }
 
 .%prefix%-actions {
