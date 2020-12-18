@@ -18,27 +18,27 @@ export async function fuel(
     session: LinkSession,
     updatePrepareStatus: (message: string) => void,
     supportedChains,
-    fuelReferrer = 'teamgreymass'
+    referrer = 'teamgreymass'
 ) {
-    updatePrepareStatus('Detecting if Fuel is required.')
+    updatePrepareStatus('Detecting if network resources are required.')
     const chainId = request.getChainId()
     const nodeUrl = supportedChains[String(chainId)]
     if (!nodeUrl) {
-        throw new Error('Chain does not support Fuel.')
+        throw new Error(`Blockchain not supported by this resource provider.`)
     }
-    const result = await apiCall(nodeUrl + '/v1/resource_provider/sign_transaction', {
-        ref: fuelReferrer,
+    const result = await apiCall(nodeUrl + '/v1/resource_provider/request_transaction', {
+        ref: referrer,
         request,
         signer: session.auth,
     })
     if (!result || !result.data) {
-        throw new Error('Invalid response from cosigner.')
+        throw new Error('Invalid response from resource provider.')
     }
     if (!result.data.signatures || !result.data.signatures[0]) {
-        throw new Error('No signature returned from cosigner.')
+        throw new Error('No signature returned from resource provider.')
     }
     if (result.code === 402 && !result.data.fee) {
-        throw new Error('Returned response indicating required payment, but provided no fee amount.')
+        throw new Error('Resource provider returned a response indicating required payment, but provided no fee amount.')
     }
     // Clone the request for modification
     const cloned = request.clone()

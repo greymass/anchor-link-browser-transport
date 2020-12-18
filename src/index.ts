@@ -470,7 +470,7 @@ export default class BrowserTransport implements LinkTransport {
                 this.fuelReferrer
             )
             const timeout = new Promise((r) => setTimeout(r, 3500)).then(() => {
-                throw new Error('Fuel API timeout after 3500ms')
+                throw new Error('Resource Provider API timeout after 3500ms')
             })
             const modified = await Promise.race([result, timeout])
             const fee = modified.getInfoKey('txfee')
@@ -482,7 +482,7 @@ export default class BrowserTransport implements LinkTransport {
             }
             return modified
         } catch (error) {
-            console.info(`Not applying fuel (${error.message})`)
+            console.info(`Aborting request from resource provider: ${error.message}`)
         }
         return request
     }
