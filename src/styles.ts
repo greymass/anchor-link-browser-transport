@@ -112,7 +112,7 @@ export default `
 }
 
 .%prefix%-subtitle {
-    margin: 14px 0;
+    margin-top: 14px 0;
     color: #5C5C5C;
     text-align: center;
     line-height: 1.3;
