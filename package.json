@@ -1,6 +1,6 @@
 {
   "name": "anchor-link-browser-transport",
-  "version": "3.0.0-rc.4",
+  "version": "3.0.0-rc.5",
   "description": "Vanilla JS browser transport for Anchor Link",
   "homepage": "https://github.com/greymass/anchor-link-browser-transport",
   "license": "BSD-3-Clause",
