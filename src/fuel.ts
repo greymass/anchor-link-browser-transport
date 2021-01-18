@@ -17,8 +17,8 @@ export async function fuel(
     request: SigningRequest,
     session: LinkSession,
     updatePrepareStatus: (message: string) => void,
-    supportedChains,
-    referrer = 'teamgreymass'
+    supportedChains: Record<string, string>,
+    referrer: string
 ) {
     updatePrepareStatus('Detecting if network resources are required.')
     const chainId = request.getChainId()
@@ -38,7 +38,9 @@ export async function fuel(
         throw new Error('No signature returned from resource provider.')
     }
     if (result.code === 402 && !result.data.fee) {
-        throw new Error('Resource provider returned a response indicating required payment, but provided no fee amount.')
+        throw new Error(
+            'Resource provider returned a response indicating required payment, but provided no fee amount.'
+        )
     }
     // Clone the request for modification
     const cloned = request.clone()
