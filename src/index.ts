@@ -33,9 +33,9 @@ export interface BrowserTransportOptions {
      */
     fuelReferrer?: string
     /**
-      * Override of the supported chains built into the transport
-      */
-    supportedChains?: object
+     * Override of the supported resource provider chains.
+     */
+    supportedChains?: Record<string, string>
 }
 
 const defaultSupportedChains = {
@@ -62,13 +62,6 @@ class Storage implements LinkStorage {
     }
 }
 
-class ExpireError extends Error {
-    public code = 'E_EXPIRE'
-    constructor(reason?: string) {
-        super(`Transaction expired ${reason ? '(' + reason + ')' : ''}`)
-    }
-}
-
 export default class BrowserTransport implements LinkTransport {
     storage: LinkStorage
 
@@ -87,7 +80,7 @@ export default class BrowserTransport implements LinkTransport {
     private requestStatus: boolean
     private fuelEnabled: boolean
     private fuelReferrer: string
-    private supportedChains: object
+    private supportedChains: Record<string, string>
     private activeRequest?: SigningRequest
     private activeCancel?: (reason: string | Error) => void
     private containerEl!: HTMLElement
@@ -96,7 +89,6 @@ export default class BrowserTransport implements LinkTransport {
     private countdownTimer?: NodeJS.Timeout
     private closeTimer?: NodeJS.Timeout
     private prepareStatusEl?: HTMLElement
-    private expireTimer?: NodeJS.Timeout
 
     private closeModal() {
         this.hide()
@@ -198,6 +190,7 @@ export default class BrowserTransport implements LinkTransport {
         try {
             qrEl.innerHTML = generateQr(crossDeviceUri)
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.warn('Unable to generate QR code', error)
         }
 
@@ -326,17 +319,11 @@ export default class BrowserTransport implements LinkTransport {
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Sign'})
         const expires = this.getExpiration(request, timeout)
 
-        const updateCountdown = setInterval(() => {
-            const timeLeft = expires - Date.now()
-            const timeFormatted =
-                timeLeft > 0 ? new Date(timeLeft).toISOString().substr(14, 5) : '00:00'
-            infoTitle.textContent = `Sign - ${timeFormatted}`
-            if (timeLeft <= 0) {
-                this.onFailure(request, new ExpireError())
-                clearInterval(updateCountdown)
-            }
-        }, 200)
-        this.countdownTimer = updateCountdown
+        const updateCountdown = () => {
+            infoTitle.textContent = `Sign - ${countdownFormat(expires)}`
+        }
+        this.countdownTimer = setInterval(updateCountdown, 200)
+        updateCountdown()
 
         const infoEl = this.createEl({class: 'info'})
         infoEl.appendChild(infoTitle)
@@ -376,22 +363,20 @@ export default class BrowserTransport implements LinkTransport {
     getExpiration(request: SigningRequest, timeout = 0) {
         // Get expiration of the transaction
         const {expiration} = request.getRawTransaction()
-        const parsed = Date.parse(`${expiration.toString()}z`)
-        // If no expiration is present, use the timeout on the session
-        if (parsed <= 0) {
-            return Date.now() + timeout
-        }
-        return parsed
-    }
-
-    private updatePrepareStatus(message: string): void {
-        if (this.prepareStatusEl) {
-            this.prepareStatusEl.textContent = message
+        if (expiration.equals(0)) {
+            // If no expiration is present, use the timeout on the session
+            return new Date(Date.now() + timeout)
+        } else {
+            return expiration.toDate()
         }
     }
 
     public async showFee(request: SigningRequest, fee: string) {
         this.activeRequest = request
+        const cancelPromise = new Promise((resolve, reject) => {
+            this.activeCancel = reject
+        })
+
         this.setupElements()
         emptyElement(this.requestEl)
         const feeEl = this.createEl({class: 'fee'})
@@ -423,17 +408,12 @@ export default class BrowserTransport implements LinkTransport {
         feeEl.appendChild(choiceEl)
 
         const expires = this.getExpiration(request)
-        const updateExpiration = setInterval(() => {
-            const timeLeft = expires - Date.now()
-            const timeFormatted =
-                timeLeft > 0 ? new Date(timeLeft).toISOString().substr(14, 5) : '00:00'
-            expireEl.textContent = `Offer expires in ${timeFormatted}`
-            if (timeLeft <= 0) {
-                this.onFailure(request, new ExpireError())
-                clearInterval(updateExpiration)
+        const expireTimer = setInterval(() => {
+            expireEl.textContent = `Offer expires in ${countdownFormat(expires)}`
+            if (expires.getTime() < Date.now()) {
+                this.activeCancel!('Offer expired')
             }
         }, 200)
-        this.expireTimer = updateExpiration
 
         const footnoteEl = this.createEl({
             class: 'footnote',
@@ -450,9 +430,9 @@ export default class BrowserTransport implements LinkTransport {
 
         this.show()
 
-        const accepted = await awaitUser(confirmEl, true, this.expireTimer)
-        clearInterval(this.expireTimer)
-        return accepted
+        await Promise.race([waitForEvent(confirmEl, 'click'), cancelPromise]).finally(() => {
+            clearInterval(expireTimer)
+        })
     }
 
     public async prepare(request: SigningRequest, session?: LinkSession) {
@@ -465,24 +445,26 @@ export default class BrowserTransport implements LinkTransport {
             const result = fuel(
                 request,
                 session,
-                this.updatePrepareStatus.bind(this),
+                (message: string) => {
+                    if (this.prepareStatusEl) {
+                        this.prepareStatusEl.textContent = message
+                    }
+                },
                 this.supportedChains,
                 this.fuelReferrer
             )
             const timeout = new Promise((r) => setTimeout(r, 3500)).then(() => {
-                throw new Error('Resource Provider API timeout after 3500ms')
+                throw new Error('API timeout after 3500ms')
             })
             const modified = await Promise.race([result, timeout])
             const fee = modified.getInfoKey('txfee')
             if (fee) {
-                const accept = await this.showFee(modified, String(fee))
-                if (accept) {
-                    return modified
-                }
+                await this.showFee(modified, String(fee))
             }
             return modified
         } catch (error) {
-            console.info(`Aborting request from resource provider: ${error.message}`)
+            // eslint-disable-next-line no-console
+            console.info(`Skipping resource provider: ${error.message || error}`)
         }
         return request
     }
@@ -558,16 +540,34 @@ export default class BrowserTransport implements LinkTransport {
     }
 }
 
-function awaitUser(el, value, expireTimer: NodeJS.Timeout) {
-    return new Promise(function (resolve, reject) {
-        var listener = (event) => {
-            el.removeEventListener('click', listener)
-            clearInterval(expireTimer)
-            resolve(value)
+function waitForEvent<K extends keyof HTMLElementEventMap>(
+    element: HTMLElement,
+    eventName: K,
+    timeout?: number
+): Promise<HTMLElementEventMap[K]> {
+    return new Promise((resolve, reject) => {
+        const listener = (event: HTMLElementEventMap[K]) => {
+            element.removeEventListener(eventName, listener)
+            resolve(event)
         }
-        el.addEventListener('click', listener)
+        element.addEventListener(eventName, listener)
+        if (timeout) {
+            setTimeout(() => {
+                element.removeEventListener(eventName, listener)
+                reject(new Error(`Timed out waiting for ${eventName}`))
+            }, timeout)
+        }
     })
 }
+
+function countdownFormat(date: Date) {
+    const timeLeft = date.getTime() - Date.now()
+    if (timeLeft > 0) {
+        return new Date(timeLeft).toISOString().substr(14, 5)
+    }
+    return '00:00'
+}
+
 function emptyElement(el: HTMLElement) {
     while (el.firstChild) {
         el.removeChild(el.firstChild)
