@@ -175,8 +175,9 @@ export default class BrowserTransport implements LinkTransport {
         this.setupElements()
 
         const sameDeviceRequest = request.clone()
+        const returnUrl = generateReturnUrl()
         sameDeviceRequest.setInfoKey('same_device', true)
-        sameDeviceRequest.setInfoKey('return_path', returnUrl())
+        sameDeviceRequest.setInfoKey('return_path', returnUrl)
 
         const sameDeviceUri = sameDeviceRequest.encode(true, false)
         const crossDeviceUri = request.encode(true, false)
@@ -200,22 +201,26 @@ export default class BrowserTransport implements LinkTransport {
             href: crossDeviceUri,
             text: 'Open Anchor app',
         })
-        linkA.addEventListener('click', (event) => {
-            event.preventDefault()
-            if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
-                iframe.setAttribute('src', sameDeviceUri)
-            } else {
-                window.location.href = sameDeviceUri
-            }
-        })
         linkEl.appendChild(linkA)
 
-        const iframe = this.createEl({
-            class: 'wskeepalive',
-            src: 'about:blank',
-            tag: 'iframe',
-        })
-        linkEl.appendChild(iframe)
+        if (isFirefox()) {
+            // this prevents firefox from killing the websocket connection once the link is clicked
+            const iframe = this.createEl({
+                class: 'wskeepalive',
+                src: 'about:blank',
+                tag: 'iframe',
+            })
+            linkEl.appendChild(iframe)
+            linkA.addEventListener('click', (event) => {
+                event.preventDefault()
+                iframe.setAttribute('src', sameDeviceUri)
+            })
+        } else {
+            linkA.addEventListener('click', (event) => {
+                event.preventDefault()
+                window.location.href = sameDeviceUri
+            })
+        }
 
         const infoEl = this.createEl({class: 'info'})
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: title})
@@ -297,7 +302,7 @@ export default class BrowserTransport implements LinkTransport {
         cancel: (reason: string | Error) => void
     ) {
         if (session.metadata.sameDevice) {
-            request.setInfoKey('return_path', returnUrl())
+            request.setInfoKey('return_path', generateReturnUrl())
         }
 
         if (session.type === 'fallback') {
@@ -574,17 +579,48 @@ function emptyElement(el: HTMLElement) {
     }
 }
 
-const returnUrlAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-const returnUrlAlphabetLen = returnUrlAlphabet.length
-/** Generate a return url with a random #fragment so mobile safari will redirect back w/o reload. */
-function returnUrl() {
-    let rv = window.location.href.split('#')[0] + '#'
-    for (let i = 0; i < 8; i++) {
-        rv += returnUrlAlphabet.charAt(Math.floor(Math.random() * returnUrlAlphabetLen))
+/** Generate a return url that Anchor will redirect back to w/o reload. */
+function generateReturnUrl() {
+    if (isChromeiOS()) {
+        // google chrome on iOS will always open new tab so we just ask it to open again as a workaround
+        return 'googlechrome://'
     }
-    return rv
+    if (isFirefoxiOS()) {
+        // same for firefox
+        return 'firefox:://'
+    }
+    if (isAppleHandheld() && isBrave()) {
+        // and brave ios
+        return 'brave://'
+    }
+    if (isAppleHandheld()) {
+        // return url with unique fragment required for iOS safari to trigger the return url
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        let rv = window.location.href.split('#')[0] + '#'
+        for (let i = 0; i < 8; i++) {
+            rv += alphabet.charAt(Math.floor(Math.random() * alphabet.length))
+        }
+        return rv
+    }
+    return window.location.href
 }
 
 function isAppleHandheld() {
     return /iP(ad|od|hone)/i.test(navigator.userAgent)
+}
+
+function isChromeiOS() {
+    return /CriOS/.test(navigator.userAgent)
+}
+
+function isFirefox() {
+    return /Firefox/i.test(navigator.userAgent)
+}
+
+function isFirefoxiOS() {
+    return /FxiOS/.test(navigator.userAgent)
+}
+
+function isBrave() {
+    return navigator['brave'] && typeof navigator['brave'].isBrave === 'function'
 }
