@@ -602,6 +602,31 @@ function generateReturnUrl() {
         }
         return rv
     }
+
+    if (isAndroid() && isFirefox()) {
+        return 'android-intent://org.mozilla.firefox'
+    }
+
+    if (isAndroid() && isEdge()) {
+        return 'android-intent://com.microsoft.emmx'
+    }
+
+    if (isAndroid() && isOpera()) {
+        return 'android-intent://com.opera.browser'
+    }
+
+    if (isAndroid() && isBrave()) {
+        return 'android-intent://com.brave.browser'
+    }
+
+    if (isAndroid() && isAndroidWebView()) {
+        return 'android-intent://webview'
+    }
+
+    if (isChromeAndroidMobile()) {
+        return 'android-intent://com.android.chrome'
+    }
+
     return window.location.href
 }
 
@@ -613,6 +638,10 @@ function isChromeiOS() {
     return /CriOS/.test(navigator.userAgent)
 }
 
+function isChromeAndroidMobile() {
+    return /Mobile/.test(navigator.userAgent)
+}
+
 function isFirefox() {
     return /Firefox/i.test(navigator.userAgent)
 }
@@ -621,6 +650,22 @@ function isFirefoxiOS() {
     return /FxiOS/.test(navigator.userAgent)
 }
 
+function isOpera() {
+    return (/OPR/.test(navigator.userAgent) || /Opera/.test(navigator.userAgent))
+}
+
+function isEdge() {
+    return /Edg/.test(navigator.userAgent)
+}
+
 function isBrave() {
     return navigator['brave'] && typeof navigator['brave'].isBrave === 'function'
+}
+
+function isAndroid() {
+    return /Android/.test(navigator.userAgent)
+}
+
+function isAndroidWebView() {
+    return /wv/.test(navigator.userAgent)
 }
