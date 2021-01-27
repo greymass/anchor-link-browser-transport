@@ -623,7 +623,7 @@ function generateReturnUrl() {
         return 'android-intent://webview'
     }
 
-    if (isChromeAndroidMobile()) {
+    if (isAndroid() && isChromeAndroidMobile()) {
         return 'android-intent://com.android.chrome'
     }
 
