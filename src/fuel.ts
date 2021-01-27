@@ -55,7 +55,8 @@ export async function fuel(
         cloned.setInfoKey('txfeeram', result.data.costs.ram)
     }
     // Set the cosigner signature onto the request for signature providers
-    cloned.setInfoKey('cosig', Signature.from(result.data.signatures[0]))
+    const signatures = result.data.signatures.map((s) => Signature.from(s))
+    cloned.setInfoKey('cosig', signatures, {type: Signature, array: true})
     // Modify the request based on the response from the API
     cloned.data.req = (
         await SigningRequest.create(
