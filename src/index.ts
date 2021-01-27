@@ -623,7 +623,7 @@ function generateReturnUrl() {
         return 'android-intent://webview'
     }
 
-    if (isAndroid() && isChromeAndroidMobile()) {
+    if (isAndroid() && isAndroidMobile()) {
         return 'android-intent://com.android.chrome'
     }
 
@@ -638,8 +638,8 @@ function isChromeiOS() {
     return /CriOS/.test(navigator.userAgent)
 }
 
-function isChromeAndroidMobile() {
-    return /Mobile/.test(navigator.userAgent)
+function isAndroidMobile() {
+    return /Chrome\/[.0-9]* Mobile/i.test(navigator.userAgent)
 }
 
 function isFirefox() {
