@@ -103,6 +103,55 @@ export default `
     align-items: center;
 }
 
+
+.%prefix%-fee .%prefix%-breakdown {
+    width: 100%;
+    overflow: hidden;
+}
+
+.%prefix%-fee .%prefix%-breakdown input {
+    position: absolute;
+    opacity: 0;
+    z-index: -1;
+}
+
+.%prefix%-fee .%prefix%-breakdown label {
+    display: block;
+    text-align: center;
+    margin: 1em 0 0;
+    padding: 1em;
+    cursor: pointer;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* Icon */
+}
+
+.%prefix%-fee .%prefix%-breakdown label::after {
+  content: "❯";
+  width: 1em;
+  height: 1em;
+  margin-left: 0.5em;
+  text-align: center;
+}
+
+.%prefix%-fee .%prefix%-breakdown .%prefix%-content {
+  max-height: 0;
+  padding: 0 1em;
+}
+
+.%prefix%-fee .%prefix%-breakdown input:checked + label::after {
+  transform: rotate(90deg);
+}
+
+.%prefix%-fee .%prefix%-breakdown input:checked ~ .%prefix%-content {
+  max-height: 100vh;
+  padding: 1em;
+}
+
 .%prefix%-title {
     color: #000000;
     font-size: 25px;

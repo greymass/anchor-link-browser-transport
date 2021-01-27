@@ -1,5 +1,6 @@
 import {
     APIError,
+    Asset,
     isInstanceOf,
     LinkSession,
     LinkStorage,
@@ -376,7 +377,7 @@ export default class BrowserTransport implements LinkTransport {
         }
     }
 
-    public async showFee(request: SigningRequest, fee: string) {
+    public async showFee(request: SigningRequest, fee: string, costs: any = false) {
         this.activeRequest = request
         const cancelPromise = new Promise((resolve, reject) => {
             this.activeCancel = reject
@@ -400,6 +401,61 @@ export default class BrowserTransport implements LinkTransport {
         feeEl.appendChild(feeTitle)
         feeEl.appendChild(feeSubtitle)
         feeEl.appendChild(feeDescription)
+
+        if (costs) {
+            const feeBreakdown = this.createEl({
+                class: 'breakdown',
+                tag: 'div',
+            })
+            // Create expanding area trigger
+            feeBreakdown.appendChild(
+                this.createEl({
+                    id: 'expand',
+                    tag: 'input',
+                    type: 'checkbox',
+                })
+            )
+            feeBreakdown.appendChild(
+                this.createEl({
+                    for: 'expand',
+                    tag: 'label',
+                    text: 'View Fee Breakdown',
+                })
+            )
+            // Create expandable content area
+            const feeBreakdownContent = this.createEl({
+                class: 'content',
+                tag: 'div',
+            })
+            feeBreakdownContent.appendChild(
+                this.createEl({
+                    tag: 'div',
+                    text: `CPU: ${costs.cpu}`,
+                })
+            )
+            feeBreakdownContent.appendChild(
+                this.createEl({
+                    tag: 'div',
+                    text: `NET: ${costs.net}`,
+                })
+            )
+            if (costs.ram.value > 0) {
+                feeBreakdownContent.appendChild(
+                    this.createEl({
+                        tag: 'div',
+                        text: `RAM: ${costs.ram}`,
+                    })
+                )
+            }
+            feeBreakdownContent.appendChild(
+                this.createEl({
+                    tag: 'div',
+                    text: `TOTAL: ${fee}`,
+                })
+            )
+            feeBreakdown.appendChild(feeBreakdownContent)
+            feeEl.appendChild(feeBreakdown)
+        }
 
         const logoEl = this.createEl({class: 'fuel'})
         this.requestEl.appendChild(logoEl)
@@ -464,7 +520,12 @@ export default class BrowserTransport implements LinkTransport {
             const modified = await Promise.race([result, timeout])
             const fee = modified.getInfoKey('txfee')
             if (fee) {
-                await this.showFee(modified, String(fee))
+                const costs = {
+                    cpu: Asset.from(modified.getInfoKey('txfeecpu')),
+                    net: Asset.from(modified.getInfoKey('txfeenet')),
+                    ram: Asset.from(modified.getInfoKey('txfeeram')),
+                }
+                await this.showFee(modified, String(fee), costs)
             }
             return modified
         } catch (error) {
