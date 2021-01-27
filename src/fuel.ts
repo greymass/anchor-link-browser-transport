@@ -48,6 +48,12 @@ export async function fuel(
     if (result.code === 402) {
         cloned.setInfoKey('txfee', result.data.fee)
     }
+    // If the fee costs exist, set them on the request for the signature provider to consume
+    if (result.data.costs) {
+        cloned.setInfoKey('txfeecpu', result.data.costs.cpu)
+        cloned.setInfoKey('txfeenet', result.data.costs.net)
+        cloned.setInfoKey('txfeeram', result.data.costs.ram)
+    }
     // Set the cosigner signature onto the request for signature providers
     cloned.setInfoKey('cosig', Signature.from(result.data.signatures[0]))
     // Modify the request based on the response from the API
