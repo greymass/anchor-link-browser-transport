@@ -89,6 +89,7 @@ export default class BrowserTransport implements LinkTransport {
     private countdownTimer?: NodeJS.Timeout
     private closeTimer?: NodeJS.Timeout
     private prepareStatusEl?: HTMLElement
+    private cancelNext?: string | Error
 
     private closeModal() {
         this.hide()
@@ -198,6 +199,7 @@ export default class BrowserTransport implements LinkTransport {
         const linkEl = this.createEl({class: 'uri'})
         const linkA = this.createEl({
             tag: 'a',
+            class: 'button',
             href: crossDeviceUri,
             text: 'Open Anchor app',
         })
@@ -301,6 +303,12 @@ export default class BrowserTransport implements LinkTransport {
         request: SigningRequest,
         cancel: (reason: string | Error) => void
     ) {
+        if (this.cancelNext) {
+            const message = this.cancelNext
+            this.cancelNext = undefined
+            cancel(message)
+            return
+        }
         if (session.metadata.sameDevice) {
             request.setInfoKey('return_path', generateReturnUrl())
         }
@@ -379,7 +387,10 @@ export default class BrowserTransport implements LinkTransport {
     public async showFee(request: SigningRequest, fee: string) {
         this.activeRequest = request
         const cancelPromise = new Promise((resolve, reject) => {
-            this.activeCancel = reject
+            this.activeCancel = (reason) => {
+                this.cancelNext = reason
+                reject(reason)
+            }
         })
 
         this.setupElements()
@@ -406,10 +417,12 @@ export default class BrowserTransport implements LinkTransport {
         this.requestEl.appendChild(feeEl)
 
         const choiceEl = this.createEl({class: 'choice'})
-        const confirmEl = this.createEl({tag: 'a', text: `Accept Fee of ${fee}`})
+        const confirmEl = this.createEl({tag: 'a', class: 'button', text: `Accept Fee of ${fee}`})
         const expireEl = this.createEl({tag: 'span', text: 'Offer expires in --:--'})
+        const skipEl = this.createEl({tag: 'a', text: 'Try without fuel'})
         choiceEl.appendChild(expireEl)
         choiceEl.appendChild(confirmEl)
+        choiceEl.appendChild(skipEl)
         feeEl.appendChild(choiceEl)
 
         const expires = this.getExpiration(request)
@@ -433,9 +446,14 @@ export default class BrowserTransport implements LinkTransport {
         footnoteEl.appendChild(footnoteLink)
         this.requestEl.appendChild(footnoteEl)
 
+        const skipPromise = waitForEvent(skipEl, 'click').then(() => {
+            throw new Error('Skipped fee')
+        })
+        const confirmPromise = waitForEvent(confirmEl, 'click')
+
         this.show()
 
-        await Promise.race([waitForEvent(confirmEl, 'click'), cancelPromise]).finally(() => {
+        await Promise.race([confirmPromise, skipPromise, cancelPromise]).finally(() => {
             clearInterval(expireTimer)
         })
     }

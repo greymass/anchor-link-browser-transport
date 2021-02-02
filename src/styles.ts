@@ -129,8 +129,7 @@ export default `
     width: 100%;
 }
 
-.%prefix%-choice a,
-.%prefix%-uri a {
+.%prefix%-button {
     color: #007AFF;
     background: #EFF1F7;
     border: 1px solid #EFF1F7;
@@ -149,8 +148,7 @@ export default `
     cursor: pointer;
 }
 
-.%prefix%-choice a:hover,
-.%prefix%-uri a:hover {
+.%prefix%-button:hover {
     border: 1px solid #007AFF;
 }
 
@@ -170,7 +168,6 @@ export default `
 
 .%prefix%-footnote {
     text-align: center;
-
     width: 100%;
     position: absolute;
     bottom: -26px;
@@ -180,6 +177,7 @@ export default `
 
 .%prefix%-footnote a {
     color: white;
+    text-decoration: underline;
 }
 
 .%prefix%-wskeepalive {
@@ -193,6 +191,13 @@ export default `
 
 .%prefix%-choice span {
     display: block;
+    margin-top: 1em;
+}
+
+.%prefix%-choice a:not(.%prefix%-button) {
+    display: block;
+    cursor: pointer;
+    text-decoration: underline;
     margin-top: 1em;
 }
 
@@ -213,14 +218,12 @@ export default `
     .%prefix%-qr svg rect {
         fill: white;
     }
-    .%prefix%-choice a,
-    .%prefix%-uri a {
+    .%prefix%-button {
         color: #FCFCFC;
         background: #262D43;
         border: 1px solid #262D43;
     }
-    .%prefix%-choice a:hover,
-    .%prefix%-uri a:hover {
+    .%prefix%-button:hover {
         border: 1px solid #FCFCFC;
         background: #333A50;
     }
