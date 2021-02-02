@@ -401,13 +401,30 @@ export default class BrowserTransport implements LinkTransport {
         const feeSubtitle = this.createEl({
             class: 'subtitle',
             tag: 'span',
-            text: `Your account is out of resources and no free transactions are currently available.`,
+            text: `Your account lacks the network resources for this transaction and it cannot be covered for free.`,
         })
+
+        const feePart1 = this.createEl({
+            tag: 'span',
+            text: 'You can '
+        })
+        const feeBypass = this.createEl({
+            tag: 'a',
+            text: 'try to proceed without the fee'
+        })
+        const feePart2 = this.createEl({
+            tag: 'span',
+            text: ' or accept the fee shown below to pay for these costs.'
+        })
+
         const feeDescription = this.createEl({
             class: 'subtitle',
             tag: 'span',
-            text: `If you would like to proceed, a fee will be added to cover the resource costs of this transaction.`,
         })
+        feeDescription.appendChild(feePart1)
+        feeDescription.appendChild(feeBypass)
+        feeDescription.appendChild(feePart2)
+
         feeEl.appendChild(feeTitle)
         feeEl.appendChild(feeSubtitle)
         feeEl.appendChild(feeDescription)
@@ -419,10 +436,8 @@ export default class BrowserTransport implements LinkTransport {
         const choiceEl = this.createEl({class: 'choice'})
         const confirmEl = this.createEl({tag: 'a', class: 'button', text: `Accept Fee of ${fee}`})
         const expireEl = this.createEl({tag: 'span', text: 'Offer expires in --:--'})
-        const skipEl = this.createEl({tag: 'a', text: 'Try without fuel'})
         choiceEl.appendChild(expireEl)
         choiceEl.appendChild(confirmEl)
-        choiceEl.appendChild(skipEl)
         feeEl.appendChild(choiceEl)
 
         const expires = this.getExpiration(request)
@@ -446,7 +461,7 @@ export default class BrowserTransport implements LinkTransport {
         footnoteEl.appendChild(footnoteLink)
         this.requestEl.appendChild(footnoteEl)
 
-        const skipPromise = waitForEvent(skipEl, 'click').then(() => {
+        const skipPromise = waitForEvent(feeBypass, 'click').then(() => {
             throw new Error('Skipped fee')
         })
         const confirmPromise = waitForEvent(confirmEl, 'click')

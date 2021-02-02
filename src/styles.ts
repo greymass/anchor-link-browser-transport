@@ -119,6 +119,12 @@ export default `
     word-break: break-word;
 }
 
+.%prefix%-subtitle a {
+    color: #007AAF;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
 .%prefix%-actions {
     display: flex;
     flex-direction: column;
@@ -215,6 +221,9 @@ export default `
     .%prefix%-subtitle {
         color: #B8C0DA;
     }
+    .%prefix%-subtitle a {
+        color: #FCFCFC;
+    }
     .%prefix%-qr svg rect {
         fill: white;
     }
@@ -224,6 +233,7 @@ export default `
         border: 1px solid #262D43;
     }
     .%prefix%-button:hover {
+        color: #FCFCFC;
         border: 1px solid #FCFCFC;
         background: #333A50;
     }
