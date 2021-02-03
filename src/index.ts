@@ -492,8 +492,8 @@ export default class BrowserTransport implements LinkTransport {
                 this.supportedChains,
                 this.fuelReferrer
             )
-            const timeout = new Promise((r) => setTimeout(r, 3500)).then(() => {
-                throw new Error('API timeout after 3500ms')
+            const timeout = new Promise((r) => setTimeout(r, 5000)).then(() => {
+                throw new Error('API timeout after 5000ms')
             })
             const modified = await Promise.race([result, timeout])
             const fee = modified.getInfoKey('txfee')
