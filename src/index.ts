@@ -11,6 +11,8 @@ import generateQr from './qrcode'
 
 import {fuel} from './fuel'
 
+const AbortPrepare = Symbol()
+
 export interface BrowserTransportOptions {
     /** CSS class prefix, defaults to `anchor-link` */
     classPrefix?: string
@@ -89,7 +91,6 @@ export default class BrowserTransport implements LinkTransport {
     private countdownTimer?: NodeJS.Timeout
     private closeTimer?: NodeJS.Timeout
     private prepareStatusEl?: HTMLElement
-    private cancelNext?: string | Error
 
     private closeModal() {
         this.hide()
@@ -303,12 +304,6 @@ export default class BrowserTransport implements LinkTransport {
         request: SigningRequest,
         cancel: (reason: string | Error) => void
     ) {
-        if (this.cancelNext) {
-            const message = this.cancelNext
-            this.cancelNext = undefined
-            cancel(message)
-            return
-        }
         if (session.metadata.sameDevice) {
             request.setInfoKey('return_path', generateReturnUrl())
         }
@@ -388,8 +383,14 @@ export default class BrowserTransport implements LinkTransport {
         this.activeRequest = request
         const cancelPromise = new Promise((resolve, reject) => {
             this.activeCancel = (reason) => {
-                this.cancelNext = reason
-                reject(reason)
+                let error: Error
+                if (typeof reason === 'string') {
+                    error = new Error(reason)
+                } else {
+                    error = reason
+                }
+                error[AbortPrepare] = true
+                reject(error)
             }
         })
 
@@ -406,15 +407,15 @@ export default class BrowserTransport implements LinkTransport {
 
         const feePart1 = this.createEl({
             tag: 'span',
-            text: 'You can '
+            text: 'You can ',
         })
         const feeBypass = this.createEl({
             tag: 'a',
-            text: 'try to proceed without the fee'
+            text: 'try to proceed without the fee',
         })
         const feePart2 = this.createEl({
             tag: 'span',
-            text: ' or accept the fee shown below to pay for these costs.'
+            text: ' or accept the fee shown below to pay for these costs.',
         })
 
         const feeDescription = this.createEl({
@@ -501,8 +502,13 @@ export default class BrowserTransport implements LinkTransport {
             }
             return modified
         } catch (error) {
-            // eslint-disable-next-line no-console
-            console.info(`Skipping resource provider: ${error.message || error}`)
+            if (error[AbortPrepare]) {
+                this.hide()
+                throw error
+            } else {
+                // eslint-disable-next-line no-console
+                console.info(`Skipping resource provider: ${error.message || error}`)
+            }
         }
         return request
     }
