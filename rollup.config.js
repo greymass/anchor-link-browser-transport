@@ -1,43 +1,110 @@
-import typescript from 'rollup-plugin-typescript2'
+import fs from 'fs'
+import dts from 'rollup-plugin-dts'
+import babel from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
-import commonjs from '@rollup/plugin-commonjs' 
-import json from '@rollup/plugin-json'
-import nodePolyfills from 'rollup-plugin-node-polyfills'
+import commonjs from '@rollup/plugin-commonjs'
+import typescript from '@rollup/plugin-typescript'
+import replace from '@rollup/plugin-replace'
 import {terser} from 'rollup-plugin-terser'
 
-let config
+import pkg from './package.json'
 
-if (process.env['UNPKG_BUNDLE']) {
-    config = {
-        input: './src/index.ts',
+const license = fs.readFileSync('LICENSE').toString('utf-8').trim()
+const banner = `
+/**
+ * Anchor Link Browser Transport v${pkg.version}
+ * ${pkg.homepage}
+ *
+ * @license
+ * ${license.replace(/\n/g, '\n * ')}
+ */
+`.trim()
+
+const extensions = ['.js', '.mjs', '.ts']
+
+const replaceVersion = replace({
+    __ver: `${pkg.version}`,
+})
+
+export default [
+    {
+        input: 'src/index.ts',
         output: {
-            name: 'AnchorLinkBrowserTransport',
-            file: 'lib/bundle.js',
-            format: 'umd',
-            sourcemap: true
-        },
-        plugins: [
-            commonjs(),
-            nodePolyfills(),
-            json(),
-            resolve({browser: true}),
-            typescript({tsconfigOverride: {compilerOptions: {target: 'es5'}}}),
-            terser(),
-        ]
-    }
-} else {
-    config = {
-        input: './src/index.ts',
-        output: {
-            file: 'lib/index.es5.js',
+            banner,
+            file: pkg.main,
             format: 'cjs',
-            sourcemap: true
+            sourcemap: true,
+            exports: 'default',
         },
-        external: ['qrcode'],
+        plugins: [replaceVersion, typescript({target: 'es5'})],
+        external: Object.keys({...pkg.dependencies, ...pkg.peerDependencies}),
+        onwarn,
+    },
+    {
+        input: 'src/index.ts',
+        output: {
+            banner,
+            file: pkg.module,
+            format: 'esm',
+            sourcemap: true,
+        },
+        plugins: [replaceVersion, typescript({target: 'esnext'})],
+        external: Object.keys({...pkg.dependencies, ...pkg.peerDependencies}),
+        onwarn,
+    },
+    {
+        input: 'src/index.ts',
+        output: {banner, file: pkg.types, format: 'esm'},
+        onwarn,
+        plugins: [dts()],
+    },
+    {
+        input: 'src/index.ts',
+        output: {
+            globals: {'anchor-link': 'AnchorLink'},
+            banner,
+            name: 'AnchorLinkBrowserTransport',
+            file: pkg.unpkg,
+            format: 'iife',
+            sourcemap: true,
+        },
         plugins: [
-            typescript({tsconfigOverride: {compilerOptions: {target: 'es5'}}}),
-        ]
+            replaceVersion,
+            resolve({extensions}),
+            commonjs(),
+            babel({
+                extensions,
+                babelHelpers: 'bundled',
+                include: ['src/**/*'],
+                presets: [
+                    '@babel/preset-typescript',
+                    [
+                        '@babel/preset-env',
+                        {
+                            targets: '>0.25%, not dead',
+                            useBuiltIns: 'usage',
+                            corejs: '3',
+                        },
+                    ],
+                ],
+                plugins: ['@babel/plugin-proposal-class-properties'],
+            }),
+            terser({
+                format: {
+                    comments(_, comment) {
+                        return comment.type === 'comment2' && /@license/.test(comment.value)
+                    },
+                    max_line_len: 500,
+                },
+            }),
+        ],
+        external: Object.keys({...pkg.peerDependencies}),
+        onwarn,
+    },
+]
+
+function onwarn(warning, rollupWarn) {
+    if (warning.code !== 'CIRCULAR_DEPENDENCY') {
+        rollupWarn(warning)
     }
 }
-
-export default config

@@ -1,9 +1,8 @@
 {
     "compilerOptions": {
-        "lib": ["dom", "es2015", "esnext.asynciterable"],
-        "module": "commonjs",
+        "lib": ["dom", "esnext"],
+        "module": "esnext",
         "moduleResolution": "node",
-        "target": "es3"
-    },
-    "exclude": ["node_modules"]
+        "target": "esnext"
+    }
 }
