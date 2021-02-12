@@ -29,6 +29,8 @@ const transport = new AnchorLinkBrowserTransport({
      *  determine based on chain id if it should be enabled or not.
      */
     disableGreymassFuel: false,
+    /** Referral account to use for Greymass Fuel. */
+    fuelReferrer: 'teamgreymass',
 })
 const link = new AnchorLink({transport})
 ```
