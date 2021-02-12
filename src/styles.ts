@@ -58,6 +58,19 @@ export default `
     background-color: white;
 }
 
+.%prefix%-version {
+    position: absolute;
+    top: 19px;
+    left: 20px;
+    cursor: help;
+    color: #B8C0DA;
+    opacity: 0.1;
+}
+
+.%prefix%-version:hover {
+    opacity: 1;
+}
+
 .%prefix%-logo {
     width: 70px;
     height: 70px;
@@ -226,6 +239,9 @@ export default `
     }
     .%prefix%-qr svg rect {
         fill: white;
+    }
+    .%prefix%-version {
+        color: #546AAF;
     }
     .%prefix%-button {
         color: #FCFCFC;

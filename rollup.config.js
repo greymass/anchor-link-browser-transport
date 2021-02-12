@@ -4,6 +4,7 @@ import babel from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import typescript from '@rollup/plugin-typescript'
+import replace from '@rollup/plugin-replace'
 import {terser} from 'rollup-plugin-terser'
 
 import pkg from './package.json'
@@ -21,6 +22,10 @@ const banner = `
 
 const extensions = ['.js', '.mjs', '.ts']
 
+const replaceVersion = replace({
+    __ver: `${pkg.version}`,
+})
+
 export default [
     {
         input: 'src/index.ts',
@@ -31,7 +36,7 @@ export default [
             sourcemap: true,
             exports: 'default',
         },
-        plugins: [typescript({target: 'es5'})],
+        plugins: [replaceVersion, typescript({target: 'es5'})],
         external: Object.keys({...pkg.dependencies, ...pkg.peerDependencies}),
         onwarn,
     },
@@ -43,7 +48,7 @@ export default [
             format: 'esm',
             sourcemap: true,
         },
-        plugins: [typescript({target: 'esnext'})],
+        plugins: [replaceVersion, typescript({target: 'esnext'})],
         external: Object.keys({...pkg.dependencies, ...pkg.peerDependencies}),
         onwarn,
     },
@@ -64,6 +69,7 @@ export default [
             sourcemap: true,
         },
         plugins: [
+            replaceVersion,
             resolve({extensions}),
             commonjs(),
             babel({

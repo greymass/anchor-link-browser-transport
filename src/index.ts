@@ -1,6 +1,7 @@
 import {
     APIError,
     isInstanceOf,
+    Link,
     LinkSession,
     LinkStorage,
     LinkTransport,
@@ -69,6 +70,9 @@ class Storage implements LinkStorage {
 }
 
 export default class BrowserTransport implements LinkTransport {
+    /** Package version. */
+    static version = '__ver' // replaced by build script
+
     storage: LinkStorage
 
     constructor(public readonly options: BrowserTransportOptions = {}) {
@@ -142,6 +146,15 @@ export default class BrowserTransport implements LinkTransport {
             this.requestEl = this.createEl({class: 'request'})
             wrapper.appendChild(this.requestEl)
             wrapper.appendChild(closeButton)
+            const version = this.createEl({
+                class: 'version',
+                text: `${BrowserTransport.version} (${Link.version})`,
+            })
+            version.onclick = (event) => {
+                event.stopPropagation()
+                window.open('https://github.com/greymass/anchor-link', '_blank')
+            }
+            wrapper.appendChild(version)
             this.containerEl.appendChild(wrapper)
         }
     }
