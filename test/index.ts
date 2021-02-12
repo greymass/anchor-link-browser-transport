@@ -72,8 +72,18 @@ async function main() {
                 data: {
                     from: session.auth.actor,
                     to: 'teamgreymass',
-                    quantity: '0.0042 EOS',
+                    quantity: '0.0001 EOS',
                     memo: 'grey money',
+                },
+            },
+            {
+                account: 'eosio',
+                name: 'voteproducer',
+                authorization: [session.auth],
+                data: {
+                    voter: session.auth.actor,
+                    proxy: 'greymassvote',
+                    producers: [],
                 },
             },
         ]
@@ -113,10 +123,33 @@ async function main() {
             })
     }
 
+    const transactButton = document.createElement('button')
+    transactButton.textContent = 'Send w/o session'
+    transactButton.onclick = () => {
+        link.transact(
+            {
+                action: {
+                    account: 'eosio',
+                    name: 'voteproducer',
+                    authorization: [session.auth],
+                    data: {
+                        voter: session.auth.actor,
+                        proxy: 'greymassvote',
+                        producers: [],
+                    },
+                },
+            },
+            {chain: 1, broadcast: true}
+        ).then((result) => {
+            console.log(result)
+        })
+    }
+
     const actions = app.querySelector('#actions')
     actions.appendChild(fuelLabel)
     actions.appendChild(actionButton)
     actions.appendChild(logoutButton)
+    actions.appendChild(transactButton)
     actions.appendChild(document.createElement('br'))
 }
 
