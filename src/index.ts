@@ -38,6 +38,10 @@ export interface BrowserTransportOptions {
      * Override of the supported resource provider chains.
      */
     supportedChains?: Record<string, string>
+    /**
+     * Set to false to not use !important styles, defaults to true.
+     */
+    importantStyles?: boolean
 }
 
 const defaultSupportedChains = {
@@ -70,6 +74,7 @@ export default class BrowserTransport implements LinkTransport {
     constructor(public readonly options: BrowserTransportOptions = {}) {
         this.classPrefix = options.classPrefix || 'anchor-link'
         this.injectStyles = !(options.injectStyles === false)
+        this.importantStyles = !(options.importantStyles === false)
         this.requestStatus = !(options.requestStatus === false)
         this.fuelEnabled = options.disableGreymassFuel !== true
         this.fuelReferrer = options.fuelReferrer || 'teamgreymass'
@@ -79,6 +84,7 @@ export default class BrowserTransport implements LinkTransport {
 
     private classPrefix: string
     private injectStyles: boolean
+    private importantStyles: boolean
     private requestStatus: boolean
     private fuelEnabled: boolean
     private fuelReferrer: string
@@ -105,7 +111,13 @@ export default class BrowserTransport implements LinkTransport {
         if (this.injectStyles && !this.styleEl) {
             this.styleEl = document.createElement('style')
             this.styleEl.type = 'text/css'
-            const css = styleText.replace(/%prefix%/g, this.classPrefix)
+            let css = styleText.replace(/%prefix%/g, this.classPrefix)
+            if (this.importantStyles) {
+                css = css
+                    .split('\n')
+                    .map((line) => line.replace(/;$/i, ' !important;'))
+                    .join('\n')
+            }
             this.styleEl.appendChild(document.createTextNode(css))
             document.head.appendChild(this.styleEl)
         }
