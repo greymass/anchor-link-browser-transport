@@ -185,9 +185,9 @@ export default class BrowserTransport implements LinkTransport {
         const crossDeviceUri = request.encode(true, false)
 
         const isIdentity = request.isIdentity()
-        const title = isIdentity ? 'Login' : 'Sign'
+        const title = isIdentity ? 'Authenticate' : 'Sign'
         const subtitle =
-            'Scan the QR-code above with your Anchor mobile app or click the button below to open Anchor on this device.'
+            'Scan the QR-code above with another device running Anchor or click the button below to open Anchor on this device.'
 
         const qrEl = this.createEl({class: 'qr'})
         try {
@@ -202,7 +202,7 @@ export default class BrowserTransport implements LinkTransport {
             tag: 'a',
             class: 'button',
             href: crossDeviceUri,
-            text: 'Open Anchor app',
+            text: 'Launch Anchor',
         })
         linkEl.appendChild(linkA)
 
@@ -238,7 +238,7 @@ export default class BrowserTransport implements LinkTransport {
 
         let footnoteEl: HTMLElement
         if (isIdentity) {
-            footnoteEl = this.createEl({class: 'footnote', text: "Don't have Anchor? "})
+            footnoteEl = this.createEl({class: 'footnote', text: "Don't have Anchor yet? "})
             const footnoteLink = this.createEl({
                 tag: 'a',
                 target: '_blank',
@@ -407,11 +407,11 @@ export default class BrowserTransport implements LinkTransport {
 
         const feePart1 = this.createEl({
             tag: 'span',
-            text: 'You can ',
+            text: 'You can try to ',
         })
         const feeBypass = this.createEl({
             tag: 'a',
-            text: 'try to proceed without the fee',
+            text: 'proceed without the fee',
         })
         const feePart2 = this.createEl({
             tag: 'span',
