@@ -210,9 +210,9 @@ export default class BrowserTransport implements LinkTransport {
         const crossDeviceUri = request.encode(true, false)
 
         const isIdentity = request.isIdentity()
-        const title = isIdentity ? 'Authenticate' : 'Sign'
+        const title = isIdentity ? 'Login' : 'Sign'
         const subtitle =
-            'Scan the QR-code above with another device running Anchor or click the button below to open Anchor on this device.'
+            'Scan the QR-code with Anchor on another device or use the button to open Anchor on this device.'
 
         const qrEl = this.createEl({class: 'qr'})
         try {
@@ -252,13 +252,12 @@ export default class BrowserTransport implements LinkTransport {
 
         const infoEl = this.createEl({class: 'info'})
         const infoTitle = this.createEl({class: 'title', tag: 'span', text: title})
+        const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
         infoEl.appendChild(infoTitle)
+        infoEl.appendChild(infoSubtitle)
 
         const actionEl = this.createEl({class: 'actions'})
         actionEl.appendChild(qrEl)
-
-        const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
-        actionEl.appendChild(infoSubtitle)
         actionEl.appendChild(linkEl)
 
         let footnoteEl: HTMLElement

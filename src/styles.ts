@@ -120,15 +120,16 @@ export default `
     color: #000000;
     font-size: 25px;
     margin-top: 14px;
-    font-weight: bold;
+    font-weight: 700;
     line-height: 30px;
+    letter-spacing: 0.5px;
 }
 
 .%prefix%-subtitle {
     margin-top: 14px;
     color: #5C5C5C;
     text-align: center;
-    line-height: 1.3;
+    line-height: 1.4;
     word-break: break-word;
 }
 
@@ -163,7 +164,7 @@ export default `
     font-weight: 400;
     text-align: center;
     display: block;
-    margin-top: 1em;
+    margin-top: 21px;
     cursor: pointer;
 }
 
@@ -172,7 +173,7 @@ export default `
 }
 
 .%prefix%-qr {
-    margin-top: 1em;
+    margin-top: 21px;
 }
 
 .%prefix%-qr svg {
