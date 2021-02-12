@@ -7,6 +7,7 @@ import {
     LinkTransport,
     SigningRequest,
 } from 'anchor-link'
+
 import styleText from './styles'
 import generateQr from './qrcode'
 
@@ -714,7 +715,7 @@ function isFirefoxiOS() {
 }
 
 function isOpera() {
-    return (/OPR/.test(navigator.userAgent) || /Opera/.test(navigator.userAgent))
+    return /OPR/.test(navigator.userAgent) || /Opera/.test(navigator.userAgent)
 }
 
 function isEdge() {
