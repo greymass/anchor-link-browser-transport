@@ -52,6 +52,8 @@ const defaultSupportedChains = {
         'https://jungle3.greymass.com',
     '4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11':
         'https://telos.greymass.com',
+    '1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4':
+        'https://wax.greymass.com',
 }
 
 class Storage implements LinkStorage {
