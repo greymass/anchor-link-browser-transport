@@ -1,5 +1,5 @@
 import type {LinkSession} from 'anchor-link'
-import {Signature, SigningRequest} from 'anchor-link'
+import {PlaceholderName, Signature, SigningRequest} from 'anchor-link'
 
 async function apiCall(url: string, body?: any) {
     return (
@@ -20,6 +20,7 @@ export async function fuel(
     supportedChains: Record<string, string>,
     referrer: string
 ) {
+    assertEligible(request, session)
     updatePrepareStatus('Detecting if network resources are required.')
     const chainId = request.getChainId()
     const nodeUrl = supportedChains[String(chainId)]
@@ -46,6 +47,9 @@ export async function fuel(
     const cloned = request.clone()
     // Set the required fee onto the request for signature providers
     if (result.code === 402) {
+        if (request.getInfoKey('no_fee')) {
+            throw new Error('Fee required but sender opted out.')
+        }
         cloned.setInfoKey('txfee', result.data.fee)
     }
     // If the fee costs exist, set them on the request for the signature provider to consume
@@ -65,4 +69,27 @@ export async function fuel(
         )
     ).data.req
     return cloned
+}
+
+function assertEligible(request: SigningRequest, session: LinkSession) {
+    if (request.getRawInfoKey('no_modify')) {
+        throw new Error('Request cannot be modified.')
+    }
+    if (request.isIdentity()) {
+        throw new Error('Identity requests cannot be co-signed.')
+    }
+    const firstAction = request.getRawActions()[0]
+    if (!firstAction) {
+        throw new Error('No actions in request.')
+    }
+    const firstAuthorizer = firstAction.authorization[0]
+    if (!firstAction) {
+        throw new Error('First authorization missing.')
+    }
+    if (
+        !firstAuthorizer.actor.equals(session.auth.actor) &&
+        !firstAuthorizer.actor.equals(PlaceholderName)
+    ) {
+        throw new Error('Not first authorizer.')
+    }
 }
