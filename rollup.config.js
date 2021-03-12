@@ -23,6 +23,7 @@ const banner = `
 const extensions = ['.js', '.mjs', '.ts']
 
 const replaceVersion = replace({
+    preventAssignment: true,
     __ver: `${pkg.version}`,
 })
 
