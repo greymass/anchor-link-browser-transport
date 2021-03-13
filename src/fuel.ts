@@ -13,6 +13,21 @@ async function apiCall(url: string, body?: any) {
     ).json()
 }
 
+export const version = 'fuel/1'
+
+/** Return true if otherVersion is same or greater than current fuel version. */
+export function compareVersion(otherVersion: string) {
+    return parseVersion(otherVersion) >= parseVersion(version)
+}
+
+function parseVersion(string: string) {
+    const parts = string.trim().split('/')
+    if (parts.length === 2 && parts[0] === 'fuel') {
+        return parseInt(parts[1]) || 0
+    }
+    return -1
+}
+
 export async function fuel(
     request: SigningRequest,
     session: LinkSession,

@@ -11,7 +11,7 @@ import {
 import styleText from './styles'
 import generateQr from './qrcode'
 
-import {fuel} from './fuel'
+import {fuel, compareVersion as fuelVersion} from './fuel'
 
 const AbortPrepare = Symbol()
 const SkipFee = Symbol()
@@ -507,6 +507,13 @@ export default class BrowserTransport implements LinkTransport {
         this.showLoading()
         if (!this.fuelEnabled || !session || request.isIdentity()) {
             // don't attempt to cosign id request or if we don't have a session attached
+            return request
+        }
+        if (
+            typeof session.metadata.cosignerVersion === 'string' &&
+            fuelVersion(session.metadata.cosignerVersion)
+        ) {
+            // if signer has cosigner, only attempt to cosign here if we have a newer version
             return request
         }
         try {
