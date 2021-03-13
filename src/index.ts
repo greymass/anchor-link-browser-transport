@@ -623,6 +623,10 @@ export default class BrowserTransport implements LinkTransport {
             this.hide()
         }
     }
+
+    public userAgent() {
+        return `BrowserTransport/${BrowserTransport.version} ${navigator.userAgent}`
+    }
 }
 
 function waitForEvent<K extends keyof HTMLElementEventMap>(
