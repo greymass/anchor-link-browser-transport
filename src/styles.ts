@@ -261,4 +261,12 @@ export default `
         background-color: black;
     }
 }
+
+@media (max-height: 600px) { .%prefix%-inner { transform: scale(0.9); } }
+@media (max-height: 540px) { .%prefix%-inner { transform: scale(0.8); } }
+@media (max-height: 480px) { .%prefix%-inner { transform: scale(0.7); } }
+@media (max-height: 420px) { .%prefix%-inner { transform: scale(0.6); } }
+@media (max-height: 360px) { .%prefix%-inner { transform: scale(0.5); } }
+@media (max-height: 300px) { .%prefix%-inner { transform: scale(0.4); } }
+
 `
