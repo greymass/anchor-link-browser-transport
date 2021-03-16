@@ -379,8 +379,12 @@ export default class BrowserTransport implements LinkTransport {
         this.requestEl.appendChild(infoEl)
         this.show()
 
-        if (isAppleHandheld() && session.metadata.sameDevice) {
-            window.location.href = 'anchor://link'
+        if (session.metadata.sameDevice) {
+            if (session.metadata.launchUrl) {
+                window.location.href = session.metadata.launchUrl
+            } else if (isAppleHandheld()) {
+                window.location.href = 'anchor://link'
+            }
         }
     }
 
