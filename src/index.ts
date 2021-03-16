@@ -1,5 +1,7 @@
 import {
     APIError,
+    Base64u,
+    Bytes,
     isInstanceOf,
     Link,
     LinkSession,
@@ -386,6 +388,22 @@ export default class BrowserTransport implements LinkTransport {
                 window.location.href = 'anchor://link'
             }
         }
+    }
+
+    public sendSessionPayload(payload: Bytes, session: LinkSession): boolean {
+        if (!session.metadata.triggerUrl || !session.metadata.sameDevice) {
+            // not same device or no trigger url supported
+            return false
+        }
+        if (payload.array.length > 700) {
+            // url could be clipped by iOS
+            return false
+        }
+        window.location.href = session.metadata.triggerUrl.replace(
+            '%s',
+            Base64u.encode(payload.array)
+        )
+        return true
     }
 
     private clearTimers() {
