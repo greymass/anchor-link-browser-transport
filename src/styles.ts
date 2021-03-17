@@ -33,9 +33,6 @@ export default `
     border-radius: 20px;
     box-shadow: 0px 4px 100px rgba(0, 0, 0, .5);
     width: 340px;
-    transition-property: all;
-    transition-duration: .5s;
-    transition-timing-function: ease-in-out;
     position: relative;
 }
 
@@ -134,7 +131,7 @@ export default `
 }
 
 .%prefix%-subtitle a {
-    color: #007AAF;
+    color: #000000;
     cursor: pointer;
     text-decoration: underline;
 }
@@ -207,6 +204,7 @@ export default `
 .%prefix%-choice {
     text-align: center;
     width: 100%;
+    color: #666;
 }
 
 .%prefix%-choice span {
@@ -243,6 +241,9 @@ export default `
     }
     .%prefix%-version {
         color: #546AAF;
+    }
+    .%prefix%-choice {
+        color: #888ea1;
     }
     .%prefix%-button {
         color: #FCFCFC;
