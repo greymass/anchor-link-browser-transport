@@ -1,8 +1,6 @@
 /* eslint-disable no-console */
 
-import {AnyAction} from 'anchor-link'
-import Link from 'anchor-link'
-
+import Link, {AnyAction, ChainId, Checksum256} from 'anchor-link'
 import BrowserTransport from './transport'
 
 const appId = 'trans.test'
@@ -10,7 +8,6 @@ const appId = 'trans.test'
 const transport = new BrowserTransport()
 
 const link = new Link({
-    chainId: '2a02a0053e5a8cf73a56ba0fda11e4d92e0238a4a2aa74fccf46d5a910746840',
     transport,
     chains: [
         {
@@ -28,7 +25,7 @@ async function main() {
     let session = await link.restoreSession(appId)
     if (!session) {
         const result = await link.login(appId)
-        console.log('logged in', result.account)
+        console.log('logged in', result)
         session = result.session
     }
     console.log('session', session)
@@ -51,19 +48,9 @@ async function main() {
         })
     }
 
-    const fuelCheck = document.createElement('input')
-    fuelCheck.type = 'checkbox'
-    fuelCheck.id = 'use-fuel'
-
-    const fuelLabel = document.createElement('label')
-    fuelLabel.htmlFor = 'use-fuel'
-    fuelLabel.appendChild(fuelCheck)
-    fuelLabel.appendChild(document.createTextNode('⛽️'))
-
     const actionButton = document.createElement('button')
     actionButton.textContent = '💰 teamgreymass'
     actionButton.onclick = () => {
-        actionButton.disabled = true
         const actions: AnyAction[] = [
             {
                 account: 'eosio.token',
@@ -76,38 +63,17 @@ async function main() {
                     memo: 'grey money',
                 },
             },
-            {
-                account: 'eosio',
-                name: 'voteproducer',
-                authorization: [session.auth],
-                data: {
-                    voter: session.auth.actor,
-                    proxy: 'greymassvote',
-                    producers: [],
-                },
-            },
         ]
-        if (fuelCheck.checked) {
-            actions.unshift({
-                account: 'greymassnoop',
-                name: 'noop',
-                authorization: [
-                    {
-                        actor: 'greymassfuel',
-                        permission: 'cosign',
-                    },
-                ],
-                data: {},
-            })
-        }
         session
             .transact({actions}, {broadcast: true})
             .then((result) => {
-                console.log('tx', result.processed)
-                const {id} = result.processed
+                console.log('trace', result.processed)
                 log.innerHTML += `
                     Transaction sent!
-                    <a href="https://jungle.bloks.io/transaction/${id}" target="_blank">${id}</a>
+                    <a href="${explorerUrl(
+                        result.chain.chainId,
+                        result.transaction.id
+                    )}" target="_blank">${result.transaction.id}</a>
                     <br>
                 `
             })
@@ -118,38 +84,36 @@ async function main() {
                     <br>
                 `
             })
-            .finally(() => {
-                actionButton.disabled = false
-            })
     }
 
     const transactButton = document.createElement('button')
-    transactButton.textContent = 'Send w/o session'
+    transactButton.textContent = '💰 teamgreymass (no session)'
     transactButton.onclick = () => {
         link.transact(
             {
                 action: {
-                    account: 'eosio',
-                    name: 'voteproducer',
+                    account: 'eosio.token',
+                    name: 'transfer',
                     authorization: [session.auth],
                     data: {
-                        voter: session.auth.actor,
-                        proxy: 'greymassvote',
-                        producers: [],
+                        from: session.auth.actor,
+                        to: 'teamgreymass',
+                        quantity: '0.0001 EOS',
+                        memo: 'grey money',
                     },
                 },
             },
-            {chain: 1, broadcast: true}
+            {chain: session.chainId, broadcast: true}
         ).then((result) => {
             console.log(result)
         })
     }
 
     const actions = app.querySelector('#actions')
-    actions.appendChild(fuelLabel)
     actions.appendChild(actionButton)
-    actions.appendChild(logoutButton)
     actions.appendChild(transactButton)
+    actions.appendChild(logoutButton)
+    actions.appendChild(document.createElement('br'))
     actions.appendChild(document.createElement('br'))
 }
 
@@ -159,3 +123,14 @@ window.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#app')!.innerHTML = error.message || String(error)
     })
 })
+
+function explorerUrl(chainId: ChainId, id: Checksum256) {
+    switch (String(chainId)) {
+        case '2a02a0053e5a8cf73a56ba0fda11e4d92e0238a4a2aa74fccf46d5a910746840':
+            return `https://jungle.bloks.io/transaction/${id}`
+        case 'aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906':
+            return `https://bloks.io/transaction/${id}`
+        default:
+            throw new Error('Unknown chain')
+    }
+}
