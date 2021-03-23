@@ -236,8 +236,8 @@ export default class BrowserTransport implements LinkTransport {
         })
         linkEl.appendChild(linkA)
 
-        if (isFirefox()) {
-            // this prevents firefox from killing the websocket connection once the link is clicked
+        if (isFirefox() || isBrave()) {
+            // this prevents firefox/brave from killing the websocket connection once the link is clicked
             const iframe = this.createEl({
                 class: 'wskeepalive',
                 src: 'about:blank',
