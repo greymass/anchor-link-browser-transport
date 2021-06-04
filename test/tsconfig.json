@@ -3,6 +3,6 @@
         "lib": ["dom", "esnext"],
         "module": "esnext",
         "moduleResolution": "node",
-        "target": "esnext"
+        "target": "es2020"
     }
 }

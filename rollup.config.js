@@ -49,7 +49,7 @@ export default [
             format: 'esm',
             sourcemap: true,
         },
-        plugins: [replaceVersion, typescript({target: 'esnext'})],
+        plugins: [replaceVersion, typescript({target: 'es2020'})],
         external: Object.keys({...pkg.dependencies, ...pkg.peerDependencies}),
         onwarn,
     },

@@ -9,7 +9,7 @@
         "noImplicitAny": false,
         "sourceMap": true,
         "strict": true,
-        "target": "esnext"
+        "target": "es2020"
     },
     "include": ["src/*"]
 }
