@@ -4,9 +4,11 @@ import {
     Bytes,
     isInstanceOf,
     Link,
+    LinkChannelSession,
     LinkSession,
     LinkStorage,
     LinkTransport,
+    SessionError,
     SigningRequest,
 } from 'anchor-link'
 
@@ -17,6 +19,7 @@ import {fuel, compareVersion as fuelVersion} from './fuel'
 
 const AbortPrepare = Symbol()
 const SkipFee = Symbol()
+const SkipToManual = Symbol()
 
 export interface BrowserTransportOptions {
     /** CSS class prefix, defaults to `anchor-link` */
@@ -58,6 +61,15 @@ const defaultSupportedChains = {
     '1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4': 'https://wax.greymass.com',
 }
 
+interface DialogArgs {
+    title: string | HTMLElement
+    subtitle: string | HTMLElement
+    type?: string
+    content?: HTMLElement
+    action?: {text: string; callback: () => void}
+    footnote?: string | HTMLElement
+}
+
 class Storage implements LinkStorage {
     constructor(readonly keyPrefix: string) {}
     async write(key: string, data: string): Promise<void> {
@@ -89,6 +101,7 @@ export default class BrowserTransport implements LinkTransport {
         this.fuelReferrer = options.fuelReferrer || 'teamgreymass'
         this.storage = new Storage(options.storagePrefix || 'anchor-link')
         this.supportedChains = options.supportedChains || defaultSupportedChains
+        this.showingManual = false
     }
 
     private classPrefix: string
@@ -106,6 +119,7 @@ export default class BrowserTransport implements LinkTransport {
     private countdownTimer?: NodeJS.Timeout
     private closeTimer?: NodeJS.Timeout
     private prepareStatusEl?: HTMLElement
+    private showingManual: boolean
 
     private closeModal() {
         this.hide()
@@ -117,6 +131,7 @@ export default class BrowserTransport implements LinkTransport {
     }
 
     private setupElements() {
+        this.showingManual = false
         if (this.injectStyles && !this.styleEl) {
             this.styleEl = document.createElement('style')
             this.styleEl.type = 'text/css'
@@ -164,27 +179,32 @@ export default class BrowserTransport implements LinkTransport {
         }
     }
 
-    private createEl(attrs?: {[key: string]: string}) {
+    private createEl(attrs?: {[key: string]: any}): HTMLElement {
         if (!attrs) attrs = {}
         const el = document.createElement(attrs.tag || 'div')
-        if (attrs) {
-            for (const attr of Object.keys(attrs)) {
-                const value = attrs[attr]
-                switch (attr) {
-                    case 'src':
-                        el.setAttribute(attr, value)
-                        break
-                    case 'tag':
-                        break
-                    case 'text':
+        for (const attr of Object.keys(attrs)) {
+            const value = attrs[attr]
+            switch (attr) {
+                case 'src':
+                    el.setAttribute(attr, value)
+                    break
+                case 'tag':
+                    break
+                case 'content':
+                    if (typeof value === 'string') {
                         el.appendChild(document.createTextNode(value))
-                        break
-                    case 'class':
-                        el.className = `${this.classPrefix}-${value}`
-                        break
-                    default:
-                        el.setAttribute(attr, value)
-                }
+                    } else {
+                        el.appendChild(value)
+                    }
+                    break
+                case 'text':
+                    el.appendChild(document.createTextNode(value))
+                    break
+                case 'class':
+                    el.className = `${this.classPrefix}-${value}`
+                    break
+                default:
+                    el.setAttribute(attr, value)
             }
         }
         return el
@@ -203,9 +223,50 @@ export default class BrowserTransport implements LinkTransport {
         }
     }
 
-    private async displayRequest(request: SigningRequest) {
+    private showDialog(args: DialogArgs) {
         this.setupElements()
 
+        const infoEl = this.createEl({class: 'info'})
+        const infoTitle = this.createEl({class: 'title', tag: 'span', content: args.title})
+        const infoSubtitle = this.createEl({
+            class: 'subtitle',
+            tag: 'span',
+            content: args.subtitle,
+        })
+        infoEl.appendChild(infoTitle)
+        infoEl.appendChild(infoSubtitle)
+        const logoEl = this.createEl({class: 'logo'})
+        if (args.type) {
+            logoEl.classList.add(args.type)
+        }
+
+        emptyElement(this.requestEl)
+        this.requestEl.appendChild(logoEl)
+        this.requestEl.appendChild(infoEl)
+        if (args.content) {
+            this.requestEl.appendChild(args.content)
+        }
+        if (args.action) {
+            const buttonEl = this.createEl({tag: 'a', class: 'button', text: args.action.text})
+            buttonEl.addEventListener('click', (event) => {
+                event.preventDefault()
+                args.action!.callback()
+            })
+            this.requestEl.appendChild(buttonEl)
+        }
+        if (args.footnote) {
+            const footnoteEl = this.createEl({class: 'footnote', content: args.footnote})
+            this.requestEl.appendChild(footnoteEl)
+        }
+        this.show()
+    }
+
+    private async displayRequest(
+        request: SigningRequest,
+        title: string,
+        subtitle: string,
+        showFooter = true
+    ) {
         const sameDeviceRequest = request.clone()
         const returnUrl = generateReturnUrl()
         sameDeviceRequest.setInfoKey('same_device', true)
@@ -214,17 +275,36 @@ export default class BrowserTransport implements LinkTransport {
         const sameDeviceUri = sameDeviceRequest.encode(true, false)
         const crossDeviceUri = request.encode(true, false)
 
-        const isIdentity = request.isIdentity()
-        const title = isIdentity ? 'Login' : 'Sign'
-        const subtitle =
-            'Scan the QR-code with Anchor on another device or use the button to open Anchor on this device.'
-
         const qrEl = this.createEl({class: 'qr'})
         try {
             qrEl.innerHTML = generateQr(crossDeviceUri)
         } catch (error) {
             // eslint-disable-next-line no-console
             console.warn('Unable to generate QR code', error)
+        }
+
+        const copyEl = this.createEl({class: 'copy'})
+        const copyA = this.createEl({tag: 'a', text: 'Copy request link', href: 'copy'})
+        const copySpan = this.createEl({tag: 'span', text: 'Link copied - Paste in Anchor'})
+        copyEl.appendChild(copyA)
+        copyEl.appendChild(copySpan)
+        qrEl.appendChild(copyEl)
+
+        copyA.addEventListener('click', (event) => {
+            event.preventDefault()
+            copyToClipboard(crossDeviceUri)
+            copyEl.classList.add('copied')
+            setTimeout(() => {
+                copyEl.classList.remove('copied')
+            }, 2000)
+        })
+
+        const svg = qrEl.querySelector('svg')
+        if (svg) {
+            svg.addEventListener('click', (event) => {
+                event.preventDefault()
+                qrEl.classList.toggle('zoom')
+            })
         }
 
         const linkEl = this.createEl({class: 'uri'})
@@ -255,77 +335,49 @@ export default class BrowserTransport implements LinkTransport {
             })
         }
 
-        const infoEl = this.createEl({class: 'info'})
-        const infoTitle = this.createEl({class: 'title', tag: 'span', text: title})
-        const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
-        infoEl.appendChild(infoTitle)
-        infoEl.appendChild(infoSubtitle)
+        const content = this.createEl({class: 'info'})
+        content.appendChild(qrEl)
+        content.appendChild(linkEl)
 
-        const actionEl = this.createEl({class: 'actions'})
-        actionEl.appendChild(qrEl)
-        actionEl.appendChild(linkEl)
-
-        let footnoteEl: HTMLElement
-        if (isIdentity) {
-            footnoteEl = this.createEl({class: 'footnote', text: "Don't have Anchor yet? "})
+        let footnote: HTMLElement | undefined
+        if (showFooter) {
+            footnote = this.createEl({text: "Don't have Anchor yet? "})
             const footnoteLink = this.createEl({
                 tag: 'a',
                 target: '_blank',
                 href: 'https://greymass.com/anchor',
                 text: 'Download now',
             })
-            footnoteEl.appendChild(footnoteLink)
-        } else {
-            footnoteEl = this.createEl({
-                class: 'footnote',
-                text: 'Anchor signing is brought to you by ',
-            })
-            const footnoteLink = this.createEl({
-                tag: 'a',
-                target: '_blank',
-                href: 'https://greymass.com',
-                text: 'Greymass',
-            })
-            footnoteEl.appendChild(footnoteLink)
+            footnote.appendChild(footnoteLink)
         }
-
-        emptyElement(this.requestEl)
-
-        const logoEl = this.createEl({class: 'logo'})
-        this.requestEl.appendChild(logoEl)
-        this.requestEl.appendChild(infoEl)
-        this.requestEl.appendChild(actionEl)
-        this.requestEl.appendChild(footnoteEl)
-
-        this.show()
+        this.showDialog({
+            title,
+            subtitle,
+            footnote,
+            content,
+        })
     }
 
     public async showLoading() {
-        this.setupElements()
-        emptyElement(this.requestEl)
-        const infoEl = this.createEl({class: 'info'})
-        const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Loading'})
-        const infoSubtitle = this.createEl({
-            class: 'subtitle',
+        const status = this.createEl({
             tag: 'span',
             text: 'Preparing request...',
         })
-        this.prepareStatusEl = infoSubtitle
-
-        infoEl.appendChild(infoTitle)
-        infoEl.appendChild(infoSubtitle)
-
-        const logoEl = this.createEl({class: 'logo loading'})
-        this.requestEl.appendChild(logoEl)
-        this.requestEl.appendChild(infoEl)
-
-        this.show()
+        this.prepareStatusEl = status
+        this.showDialog({
+            title: 'Loading',
+            subtitle: status,
+            type: 'loading',
+        })
     }
 
     public onRequest(request: SigningRequest, cancel: (reason: string | Error) => void) {
         this.activeRequest = request
         this.activeCancel = cancel
-        this.displayRequest(request).catch(cancel)
+        const title = request.isIdentity() ? 'Login' : 'Sign'
+        const subtitle =
+            'Scan the QR-code with Anchor on another device or use the button to open it here.'
+        this.displayRequest(request, title, subtitle).catch(cancel)
     }
 
     public onSessionRequest(
@@ -348,38 +400,46 @@ export default class BrowserTransport implements LinkTransport {
 
         this.activeRequest = request
         this.activeCancel = cancel
-        this.setupElements()
 
-        const timeout = session.metadata.timeout || 60 * 1000 * 5
+        const timeout = session.metadata.timeout || 60 * 1000 * 2
         const deviceName = session.metadata.name
-
-        const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Sign'})
-        const expires = this.getExpiration(request, timeout)
-
-        const updateCountdown = () => {
-            infoTitle.textContent = `Sign - ${countdownFormat(expires)}`
-        }
-        this.countdownTimer = setInterval(updateCountdown, 200)
-        updateCountdown()
-
-        const infoEl = this.createEl({class: 'info'})
-        infoEl.appendChild(infoTitle)
 
         let subtitle: string
         if (deviceName && deviceName.length > 0) {
-            subtitle = `Please open your Anchor Wallet on your device “${deviceName}” to review and sign the transaction.`
+            subtitle = `Please open Anchor Wallet on “${deviceName}” to review and sign the transaction.`
         } else {
             subtitle = 'Please review and sign the transaction in the linked wallet.'
         }
 
-        const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
-        infoEl.appendChild(infoSubtitle)
+        const title = this.createEl({tag: 'span', text: 'Sign'})
+        const expires = new Date(Date.now() + timeout)
+        const updateCountdown = () => {
+            title.textContent = `Sign - ${countdownFormat(expires)}`
+        }
+        this.countdownTimer = setInterval(updateCountdown, 200)
+        updateCountdown()
 
-        emptyElement(this.requestEl)
-        const logoEl = this.createEl({class: 'logo'})
-        this.requestEl.appendChild(logoEl)
-        this.requestEl.appendChild(infoEl)
-        this.show()
+        const content = this.createEl({class: 'info'})
+        const manualHr = this.createEl({tag: 'hr'})
+        const manualA = this.createEl({
+            tag: 'a',
+            text: 'Sign manually or with another device',
+            class: 'manual',
+        })
+        manualA.addEventListener('click', (event) => {
+            event.preventDefault()
+            const error = new SessionError('Manual', 'E_TIMEOUT', session)
+            error[SkipToManual] = true
+            cancel(error)
+        })
+        content.appendChild(manualHr)
+        content.appendChild(manualA)
+
+        this.showDialog({
+            title,
+            subtitle,
+            content,
+        })
 
         if (session.metadata.sameDevice) {
             if (session.metadata.launchUrl) {
@@ -417,18 +477,7 @@ export default class BrowserTransport implements LinkTransport {
         }
     }
 
-    getExpiration(request: SigningRequest, timeout = 0) {
-        // Get expiration of the transaction
-        const {expiration} = request.getRawTransaction()
-        if (expiration.equals(0)) {
-            // If no expiration is present, use the timeout on the session
-            return new Date(Date.now() + timeout)
-        } else {
-            return expiration.toDate()
-        }
-    }
-
-    public async showFee(request: SigningRequest, fee: string) {
+    private async showFee(request: SigningRequest, fee: string) {
         this.activeRequest = request
         const cancelPromise = new Promise((resolve, reject) => {
             this.activeCancel = (reason) => {
@@ -443,17 +492,7 @@ export default class BrowserTransport implements LinkTransport {
             }
         })
 
-        this.setupElements()
-        emptyElement(this.requestEl)
-        const feeEl = this.createEl({class: 'fee'})
-
-        const feeTitle = this.createEl({class: 'title', tag: 'div', text: 'Transaction Fee'})
-        const feeSubtitle = this.createEl({
-            class: 'subtitle',
-            tag: 'span',
-            text: `Your account lacks the network resources for this transaction and it cannot be covered for free.`,
-        })
-
+        const content = this.createEl({class: 'info'})
         const feePart1 = this.createEl({
             tag: 'span',
             text: 'You can try to ',
@@ -474,23 +513,16 @@ export default class BrowserTransport implements LinkTransport {
         feeDescription.appendChild(feePart1)
         feeDescription.appendChild(feeBypass)
         feeDescription.appendChild(feePart2)
+        content.appendChild(feeDescription)
 
-        feeEl.appendChild(feeTitle)
-        feeEl.appendChild(feeSubtitle)
-        feeEl.appendChild(feeDescription)
+        const expireEl = this.createEl({
+            tag: 'span',
+            class: 'subtitle',
+            text: 'Offer expires in --:--',
+        })
+        content.appendChild(expireEl)
 
-        const logoEl = this.createEl({class: 'fuel'})
-        this.requestEl.appendChild(logoEl)
-        this.requestEl.appendChild(feeEl)
-
-        const choiceEl = this.createEl({class: 'choice'})
-        const confirmEl = this.createEl({tag: 'a', class: 'button', text: `Accept Fee of ${fee}`})
-        const expireEl = this.createEl({tag: 'span', text: 'Offer expires in --:--'})
-        choiceEl.appendChild(expireEl)
-        choiceEl.appendChild(confirmEl)
-        feeEl.appendChild(choiceEl)
-
-        const expires = this.getExpiration(request)
+        const expires = request.getRawTransaction().expiration.toDate()
         const expireTimer = setInterval(() => {
             expireEl.textContent = `Offer expires in ${countdownFormat(expires)}`
             if (expires.getTime() < Date.now()) {
@@ -498,8 +530,8 @@ export default class BrowserTransport implements LinkTransport {
             }
         }, 200)
 
-        const footnoteEl = this.createEl({
-            class: 'footnote',
+        const footnote = this.createEl({
+            tag: 'span',
             text: 'Resources offered by ',
         })
         const footnoteLink = this.createEl({
@@ -508,21 +540,48 @@ export default class BrowserTransport implements LinkTransport {
             href: 'https://greymass.com/en/fuel',
             text: 'Greymass Fuel',
         })
-        footnoteEl.appendChild(footnoteLink)
-        this.requestEl.appendChild(footnoteEl)
+        footnote.appendChild(footnoteLink)
 
         const skipPromise = waitForEvent(feeBypass, 'click').then(() => {
             const error = new Error('Skipped fee')
             error[SkipFee] = true
             throw error
         })
-        const confirmPromise = waitForEvent(confirmEl, 'click')
-
-        this.show()
+        const confirmPromise = new Promise<void>((resolve) => {
+            this.showDialog({
+                title: 'Transaction Fee',
+                subtitle:
+                    'Your account lacks the network resources for this transaction and it cannot be covered for free.',
+                type: 'fuel',
+                content,
+                action: {
+                    text: `Accept Fee of ${fee}`,
+                    callback: resolve,
+                },
+                footnote,
+            })
+        })
 
         await Promise.race([confirmPromise, skipPromise, cancelPromise]).finally(() => {
             clearInterval(expireTimer)
         })
+    }
+
+    private showRecovery(request: SigningRequest, session: LinkSession) {
+        request.data.info = request.data.info.filter((pair) => pair.key !== 'return_path')
+        if (session.type === 'channel') {
+            const channelSession = session as Partial<LinkChannelSession>
+            if (channelSession.addLinkInfo) {
+                channelSession.addLinkInfo(request)
+            }
+        }
+        this.displayRequest(
+            request,
+            'Sign manually',
+            'Want to sign with another device or didn’t get the signing request in your wallet, scan this QR or copy request and paste in app.',
+            false
+        )
+        this.showingManual = true
     }
 
     public async prepare(request: SigningRequest, session?: LinkSession) {
@@ -576,23 +635,55 @@ export default class BrowserTransport implements LinkTransport {
         return request
     }
 
+    public recoverError(error: Error, request: SigningRequest) {
+        if (
+            request === this.activeRequest &&
+            (error['code'] === 'E_DELIVERY' || error['code'] === 'E_TIMEOUT') &&
+            error['session']
+        ) {
+            // recover from session errors by displaying a manual sign dialog
+            if (this.showingManual) {
+                // already showing recovery sign
+                return true
+            }
+            const session: LinkSession = error['session']
+            if (error[SkipToManual]) {
+                this.showRecovery(request, session)
+                return true
+            }
+            const deviceName = session.metadata.name
+            let subtitle: string
+            if (deviceName && deviceName.length > 0) {
+                subtitle = `Unable to deliver the request to “${deviceName}”.`
+            } else {
+                subtitle = 'Unable to deliver the request to the linked wallet.'
+            }
+            subtitle += ` ${error.message}.`
+            this.showDialog({
+                title: 'Unable to reach device',
+                subtitle,
+                type: 'warning',
+                action: {
+                    text: 'Sign manually',
+                    callback: () => {
+                        this.showRecovery(request, session)
+                    },
+                },
+            })
+            return true
+        }
+        return false
+    }
+
     public onSuccess(request: SigningRequest) {
         if (request === this.activeRequest) {
             this.clearTimers()
             if (this.requestStatus) {
-                this.setupElements()
-                const infoEl = this.createEl({class: 'info'})
-                const logoEl = this.createEl({class: 'logo'})
-                logoEl.classList.add('success')
-                const infoTitle = this.createEl({class: 'title', tag: 'span', text: 'Success!'})
-                const subtitle = request.isIdentity() ? 'Login completed.' : 'Transaction signed.'
-                const infoSubtitle = this.createEl({class: 'subtitle', tag: 'span', text: subtitle})
-                infoEl.appendChild(infoTitle)
-                infoEl.appendChild(infoSubtitle)
-                emptyElement(this.requestEl)
-                this.requestEl.appendChild(logoEl)
-                this.requestEl.appendChild(infoEl)
-                this.show()
+                this.showDialog({
+                    title: 'Success!',
+                    subtitle: request.isIdentity() ? 'Login completed.' : 'Transaction signed.',
+                    type: 'success',
+                })
                 this.closeTimer = setTimeout(() => {
                     this.hide()
                 }, 1.5 * 1000)
@@ -606,15 +697,6 @@ export default class BrowserTransport implements LinkTransport {
         if (request === this.activeRequest && error['code'] !== 'E_CANCEL') {
             this.clearTimers()
             if (this.requestStatus) {
-                this.setupElements()
-                const infoEl = this.createEl({class: 'info'})
-                const logoEl = this.createEl({class: 'logo'})
-                logoEl.classList.add('error')
-                const infoTitle = this.createEl({
-                    class: 'title',
-                    tag: 'span',
-                    text: 'Transaction Error',
-                })
                 let errorMessage: string
                 if (isInstanceOf(error, APIError)) {
                     if (error.name === 'eosio_assert_message_exception') {
@@ -627,17 +709,11 @@ export default class BrowserTransport implements LinkTransport {
                 } else {
                     errorMessage = error.message || String(error)
                 }
-                const infoSubtitle = this.createEl({
-                    class: 'subtitle',
-                    tag: 'span',
-                    text: errorMessage,
+                this.showDialog({
+                    title: 'Transaction Error',
+                    subtitle: errorMessage,
+                    type: 'error',
                 })
-                infoEl.appendChild(infoTitle)
-                infoEl.appendChild(infoSubtitle)
-                emptyElement(this.requestEl)
-                this.requestEl.appendChild(logoEl)
-                this.requestEl.appendChild(infoEl)
-                this.show()
             } else {
                 this.hide()
             }
@@ -774,4 +850,27 @@ function isAndroid() {
 
 function isAndroidWebView() {
     return /wv/.test(navigator.userAgent)
+}
+
+function copyToClipboard(text: string) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+    } else {
+        const el = document.createElement('textarea')
+        try {
+            el.setAttribute('contentEditable', '')
+            el.value = text
+            document.body.appendChild(el)
+            el.select()
+            const range = document.createRange()
+            range.selectNodeContents(el)
+            const sel = window.getSelection()
+            sel!.removeAllRanges()
+            sel!.addRange(range)
+            el.setSelectionRange(0, el.value.length)
+            document.execCommand('copy')
+        } finally {
+            document.body.removeChild(el)
+        }
+    }
 }

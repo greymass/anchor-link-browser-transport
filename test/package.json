@@ -7,7 +7,7 @@
     "dependencies": {
         "@snowpack/plugin-typescript": "^1.1.1",
         "anchor-link": "^3.0.0",
-        "snowpack": "^3.0.11",
+        "snowpack": "3.0.x",
         "typescript": "^4.1.2"
     }
 }
