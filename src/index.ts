@@ -284,7 +284,7 @@ export default class BrowserTransport implements LinkTransport {
         }
 
         const copyEl = this.createEl({class: 'copy'})
-        const copyA = this.createEl({tag: 'a', text: 'Copy request link', href: 'copy'})
+        const copyA = this.createEl({tag: 'a', text: 'Copy request link'})
         const copySpan = this.createEl({tag: 'span', text: 'Link copied - Paste in Anchor'})
         copyEl.appendChild(copyA)
         copyEl.appendChild(copySpan)
