@@ -290,6 +290,7 @@ export default `
 }
 
 @media (prefers-color-scheme: dark) {
+    .%prefix%-info hr,
     .%prefix%-inner {
         background: #262D43;
         color: white;
@@ -317,6 +318,7 @@ export default `
         color: #546AAF;
     }
     .%prefix%-qr a,
+    .%prefix%-manual,
     .%prefix%-button {
         color: #FCFCFC;
     }
