@@ -372,6 +372,7 @@ export default class BrowserTransport implements LinkTransport {
     }
 
     public onRequest(request: SigningRequest, cancel: (reason: string | Error) => void) {
+        this.clearTimers()
         this.activeRequest = request
         this.activeCancel = cancel
         const title = request.isIdentity() ? 'Login' : 'Sign'
@@ -398,6 +399,7 @@ export default class BrowserTransport implements LinkTransport {
             return
         }
 
+        this.clearTimers()
         this.activeRequest = request
         this.activeCancel = cancel
 
