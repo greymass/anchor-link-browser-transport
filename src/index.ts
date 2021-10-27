@@ -329,7 +329,9 @@ export default class BrowserTransport implements LinkTransport {
         createAccountLink.addEventListener('click', (event) => {
             event.preventDefault()
 
-            const accountCreation = AccountCreation()
+            const accountCreation = new AccountCreation({
+                supportedChains: this.supportedChains
+            })
             accountCreation.showDialog()
 
             this.closeModal()
