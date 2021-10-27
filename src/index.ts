@@ -330,11 +330,10 @@ export default class BrowserTransport implements LinkTransport {
             event.preventDefault()
 
             const accountCreation = new AccountCreation({
-                supportedChains: this.supportedChains
+                supportedChains: this.supportedChains,
+                loginRequest: this.activeRequest.toString(),
             })
             accountCreation.showDialog()
-
-            this.closeModal()
         })
 
         if (isFirefox() || isBrave()) {
