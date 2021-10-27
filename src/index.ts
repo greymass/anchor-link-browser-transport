@@ -12,6 +12,8 @@ import {
     SigningRequest,
 } from 'anchor-link'
 
+import { AccountCreation } from './account-creation'
+
 import styleText from './styles'
 import generateQr from './qrcode'
 
@@ -315,6 +317,23 @@ export default class BrowserTransport implements LinkTransport {
             text: 'Launch Anchor',
         })
         linkEl.appendChild(linkA)
+
+        const createAccountLink = this.createEl({
+            tag: 'a',
+            class: 'button',
+            href: '#',
+            text: 'Create Account',
+        })
+        linkEl.appendChild(createAccountLink)
+
+        createAccountLink.addEventListener('click', (event) => {
+            event.preventDefault()
+
+            const accountCreation = AccountCreation()
+            accountCreation.showDialog()
+
+            this.closeModal()
+        })
 
         if (isFirefox() || isBrave()) {
             // this prevents firefox/brave from killing the websocket connection once the link is clicked
