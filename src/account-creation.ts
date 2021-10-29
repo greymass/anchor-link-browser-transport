@@ -1,3 +1,4 @@
+import { NameType } from '@greymass/eosio'
 
 export interface AccountCreationOptions {
     /**
@@ -5,7 +6,7 @@ export interface AccountCreationOptions {
      */
     supportedChains?: Record<string, string>
 
-    loginRequest?: string
+    loginScope?: NameType
 }
 
 const accountCreationUrl = 'https://create.anchor.link';
@@ -16,21 +17,24 @@ export class AccountCreation {
 
     private popupWindow?: Window
     private supportedChains?: Record<string, string>
-    private loginRequest?: string
+    private loginScope?: NameType
 
     constructor(public readonly options: AccountCreationOptions = {}) {
         this.supportedChains = options.supportedChains
-        this.loginRequest = options.loginRequest
+        this.loginScope = options.loginScope
     }
 
     async createAccount() {
+        const supportedChains = this.supportedChains && `supported_chains=${
+          Object.keys(this.supportedChains).join(',')
+        }`;
         const popupWindowUrl =
             `${
               accountCreationUrl
-            }?skip_intro=true&supported_chains=${
-              this.supportedChains
-            }&login_request=${
-              this.loginRequest
+            }/product?${
+                supportedChains || ''
+            }${
+              this.loginOnCreate ? '&login_on_create=true' : ''
             }`;
 
         this.popupWindow = window.open(
@@ -44,7 +48,7 @@ export class AccountCreation {
             resizable=yes,
             width=400,
             height=600`
-        );
+        )!;
 
         return new Promise(resolve => {
             this.popupWindow.addEventListener("message", (event) => {
@@ -54,7 +58,9 @@ export class AccountCreation {
 
                 if (event.data.success) {
                     resolve({
-                        identityRequest: event.data.identityRequest
+                        account: event.data.account,
+                        chainId: event.data.chainId,
+                        identityRequest: event.data.identityRequest,
                     });
                 } else {
                     resolve({

@@ -12,6 +12,8 @@ import {
     SigningRequest,
 } from 'anchor-link'
 
+import { NameType } from '@greymass/eosio'
+
 import { AccountCreation } from './account-creation'
 
 import styleText from './styles'
@@ -52,6 +54,8 @@ export interface BrowserTransportOptions {
      * Set to false to not use !important styles, defaults to true.
      */
     importantStyles?: boolean
+
+    scope?: NameType
 }
 
 const defaultSupportedChains = {
@@ -104,6 +108,7 @@ export default class BrowserTransport implements LinkTransport {
         this.storage = new Storage(options.storagePrefix || 'anchor-link')
         this.supportedChains = options.supportedChains || defaultSupportedChains
         this.showingManual = false
+        this.scope = options.scope
     }
 
     private classPrefix: string
@@ -122,6 +127,7 @@ export default class BrowserTransport implements LinkTransport {
     private closeTimer?: NodeJS.Timeout
     private prepareStatusEl?: HTMLElement
     private showingManual: boolean
+    private scope: NameType
 
     private closeModal() {
         this.hide()
@@ -331,16 +337,18 @@ export default class BrowserTransport implements LinkTransport {
 
             const accountCreation = new AccountCreation({
                 supportedChains: this.supportedChains,
-                loginRequest: this.activeRequest.toString(),
+                loginScope: this.scope,
             })
 
             this.showAccountCreationMessage()
 
-            const { identityRequest, error } = await accountCreation.createAccount()
+            const { signedIdentityRequest, account, chainId, error } = await accountCreation.createAccount()
 
             if (error) {
                 alert('An error occurred while creating an account')
             }
+
+            // await Link.identify({ signedIdentityRequest })
 
             this.closeModal()
         })
