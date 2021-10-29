@@ -326,14 +326,23 @@ export default class BrowserTransport implements LinkTransport {
         })
         linkEl.appendChild(createAccountLink)
 
-        createAccountLink.addEventListener('click', (event) => {
+        createAccountLink.addEventListener('click', async (event) => {
             event.preventDefault()
 
             const accountCreation = new AccountCreation({
                 supportedChains: this.supportedChains,
                 loginRequest: this.activeRequest.toString(),
             })
-            accountCreation.showDialog()
+
+            this.showAccountCreationMessage()
+
+            const { identityRequest, error } = await accountCreation.createAccount()
+
+            if (error) {
+                alert('An error occurred while creating an account')
+            }
+
+            this.closeModal()
         })
 
         if (isFirefox() || isBrave()) {
@@ -387,6 +396,14 @@ export default class BrowserTransport implements LinkTransport {
         this.showDialog({
             title: 'Loading',
             subtitle: status,
+            type: 'loading',
+        })
+    }
+
+    public async showAccountCreationMessage() {
+        this.showDialog({
+            title: 'Creating an account..',
+            subtitle: 'Please direct your attention to the popup window that was just opened in order to create an eosio account.',
             type: 'loading',
         })
     }
