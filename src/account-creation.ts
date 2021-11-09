@@ -9,7 +9,7 @@ export interface AccountCreationOptions {
     loginScope?: NameType
 }
 
-const accountCreationUrl = 'https://create.anchor.link';
+const accountCreationUrl =  'http://localhost:3000' //'https://create.anchor.link';
 
 export class AccountCreation {
     /** Package version. */
@@ -18,6 +18,7 @@ export class AccountCreation {
     private popupWindow?: Window
     private supportedChains?: Record<string, string>
     private loginScope?: NameType
+    private loginOnCreate?: boolean
 
     constructor(public readonly options: AccountCreationOptions = {}) {
         this.supportedChains = options.supportedChains
@@ -31,7 +32,7 @@ export class AccountCreation {
         const popupWindowUrl =
             `${
               accountCreationUrl
-            }/product?${
+            }/create?${
                 supportedChains || ''
             }${
               this.loginOnCreate ? '&login_on_create=true' : ''
