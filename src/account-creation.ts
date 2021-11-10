@@ -4,9 +4,11 @@ export interface AccountCreationOptions {
     /**
      * Override of the supported resource provider chains.
      */
+    scope: NameType
+
     supportedChains?: Record<string, string>
 
-    loginScope?: NameType
+    loginOnCreate?: boolean
 }
 
 const accountCreationUrl =  'http://localhost:3000' //'https://create.anchor.link';
@@ -16,13 +18,14 @@ export class AccountCreation {
     static version = '__ver' // replaced by build script
 
     private popupWindow?: Window
+
+    private scope: NameType
     private supportedChains?: Record<string, string>
-    private loginScope?: NameType
     private loginOnCreate?: boolean
 
     constructor(public readonly options: AccountCreationOptions = {}) {
         this.supportedChains = options.supportedChains
-        this.loginScope = options.loginScope
+        this.scope = options.scope
     }
 
     async createAccount() {
@@ -36,6 +39,8 @@ export class AccountCreation {
                 supportedChains || ''
             }${
               this.loginOnCreate ? '&login_on_create=true' : ''
+            }${
+              `&scope=${this.scope}`
             }`;
 
         this.popupWindow = window.open(

@@ -337,7 +337,8 @@ export default class BrowserTransport implements LinkTransport {
 
             const accountCreation = new AccountCreation({
                 supportedChains: this.supportedChains,
-                loginScope: this.scope,
+                scope: this.scope,
+                loginOnCreate: true,
             })
 
             this.showAccountCreationMessage()
