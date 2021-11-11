@@ -9,9 +9,11 @@ export interface AccountCreationOptions {
     supportedChains?: Record<string, string>
 
     loginOnCreate?: boolean
+
+    returnUrl?: string
 }
 
-const accountCreationUrl =  'http://localhost:3000' //'https://create.anchor.link';
+const accountCreationUrl = 'http://192.168.1.66:3000'; //'http://10.0.2.2:3000' //'http://localhost:3000' //'https://create.anchor.link';
 
 export class AccountCreation {
     /** Package version. */
@@ -22,10 +24,13 @@ export class AccountCreation {
     private scope: NameType
     private supportedChains?: Record<string, string>
     private loginOnCreate?: boolean
+    private returnUrl?: string
 
     constructor(public readonly options: AccountCreationOptions = {}) {
         this.supportedChains = options.supportedChains
         this.scope = options.scope
+        this.loginOnCreate = options.loginOnCreate
+        this.returnUrl = options.returnUrl
     }
 
     async createAccount() {
@@ -35,13 +40,25 @@ export class AccountCreation {
         const popupWindowUrl =
             `${
               accountCreationUrl
-            }/create?${
-                supportedChains || ''
+            }/activate/ASRlNTY1ZWI3My0wYmEwLTRhYTEtYjM3Zi1jN2NmMDAyZDgwOWQA?${
+                `supported_chains=${supportedChains || ''}`
+            }${
+                `&scope=${this.scope}`
+            }${
+                `&return_url=${this.returnUrl || ''}`
             }${
               this.loginOnCreate ? '&login_on_create=true' : ''
-            }${
-              `&scope=${this.scope}`
             }`;
+
+            // `${
+            //   accountCreationUrl
+            // }/create?${
+            //     supportedChains || ''
+            // }${
+            //   this.loginOnCreate ? '&login_on_create=true' : ''
+            // }${
+            //   `&scope=${this.scope}`
+            // }`;
 
         this.popupWindow = window.open(
             popupWindowUrl,
@@ -56,17 +73,21 @@ export class AccountCreation {
             height=600`
         )!;
 
-        return new Promise(resolve => {
-            this.popupWindow.addEventListener("message", (event) => {
-                if (event.origin !== accountCreationUrl) {
-                    return;
-                }
+        console.log('opened window')
 
-                if (event.data.success) {
+        return new Promise(resolve => {
+            window.addEventListener("message", (event) => {
+                // if (event.origin !== accountCreationUrl) {
+                //     return;
+                // }
+
+                console.log({data: event.data});
+
+                if (event.data.status === 'success') {
                     resolve({
-                        account: event.data.account,
-                        chainId: event.data.chainId,
-                        identityRequest: event.data.identityRequest,
+                        actor: event.data.actor,
+                        network: event.data.network,
+                        identityProof: event.data.identity_proof,
                     });
                 } else {
                     resolve({
