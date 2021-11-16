@@ -324,15 +324,7 @@ export default class BrowserTransport implements LinkTransport {
         })
         linkEl.appendChild(linkA)
 
-        const createAccountLink = this.createEl({
-            tag: 'a',
-            class: 'button',
-            href: '#',
-            text: 'Create Account',
-        })
-        linkEl.appendChild(createAccountLink)
-
-        createAccountLink.addEventListener('click', async (event) => {
+        const accountCreationCallback = (event) => {
             event.preventDefault()
 
             const accountCreation = new AccountCreation({
@@ -353,7 +345,7 @@ export default class BrowserTransport implements LinkTransport {
             // await Link.identify({ signedIdentityRequest })
 
             this.closeModal()
-        })
+        }
 
         if (isFirefox() || isBrave()) {
             // this prevents firefox/brave from killing the websocket connection once the link is clicked
@@ -384,8 +376,8 @@ export default class BrowserTransport implements LinkTransport {
             const footnoteLink = this.createEl({
                 tag: 'a',
                 target: '_blank',
-                href: 'https://greymass.com/anchor',
-                text: 'Download now',
+                onclick: accountCreationCallback,
+                text: 'Create an Account',
             })
             footnote.appendChild(footnoteLink)
         }

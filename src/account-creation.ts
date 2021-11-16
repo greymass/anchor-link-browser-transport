@@ -40,7 +40,7 @@ export class AccountCreation {
         const popupWindowUrl =
             `${
               accountCreationUrl
-            }/activate/ASRlNTY1ZWI3My0wYmEwLTRhYTEtYjM3Zi1jN2NmMDAyZDgwOWQA?${
+            }/create?${
                 `supported_chains=${supportedChains || ''}`
             }${
                 `&scope=${this.scope}`
@@ -49,16 +49,6 @@ export class AccountCreation {
             }${
               this.loginOnCreate ? '&login_on_create=true' : ''
             }`;
-
-            // `${
-            //   accountCreationUrl
-            // }/create?${
-            //     supportedChains || ''
-            // }${
-            //   this.loginOnCreate ? '&login_on_create=true' : ''
-            // }${
-            //   `&scope=${this.scope}`
-            // }`;
 
         this.popupWindow = window.open(
             popupWindowUrl,
@@ -72,8 +62,6 @@ export class AccountCreation {
             width=400,
             height=600`
         )!;
-
-        console.log('opened window')
 
         return new Promise(resolve => {
             window.addEventListener("message", (event) => {
