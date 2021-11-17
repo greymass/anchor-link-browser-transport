@@ -16,6 +16,8 @@
     "src/*"
   ],
   "dependencies": {
+    "@greymass/account-creation": "https://github.com/greymass/account-creation-lib",
+    "@greymass/eosio": "^0.5.2",
     "tslib": "^2.0.3"
   },
   "peerDependencies": {

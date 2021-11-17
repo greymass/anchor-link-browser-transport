@@ -13,8 +13,7 @@ import {
 } from 'anchor-link'
 
 import { NameType } from '@greymass/eosio'
-
-import { AccountCreation } from './account-creation'
+import { AccountCreator } from '@greymass/account-creation'
 
 import styleText from './styles'
 import generateQr from './qrcode'
@@ -127,7 +126,7 @@ export default class BrowserTransport implements LinkTransport {
     private closeTimer?: NodeJS.Timeout
     private prepareStatusEl?: HTMLElement
     private showingManual: boolean
-    private scope: NameType
+    private scope?: NameType
 
     private closeModal() {
         this.hide()
@@ -324,10 +323,10 @@ export default class BrowserTransport implements LinkTransport {
         })
         linkEl.appendChild(linkA)
 
-        const accountCreationCallback = (event) => {
+        const handleAccountCreation = async (event) => {
             event.preventDefault()
 
-            const accountCreation = new AccountCreation({
+            const accountCreator = new AccountCreator({
                 supportedChains: this.supportedChains,
                 scope: this.scope || 'unknown',
                 loginOnCreate: true,
@@ -336,13 +335,16 @@ export default class BrowserTransport implements LinkTransport {
 
             this.showAccountCreationMessage()
 
-            const { signedIdentityRequest, account, chainId, error } = await accountCreation.createAccount()
+            console.log({accountCreator})
+
+            const { actor, network, error } = await accountCreator.createAccount()
 
             if (error) {
                 alert('An error occurred while creating an account')
             }
 
-            // await Link.identify({ signedIdentityRequest })
+            console.log(`Created account ${actor} on ${network}`);
+
 
             this.closeModal()
         }
@@ -376,9 +378,11 @@ export default class BrowserTransport implements LinkTransport {
             const footnoteLink = this.createEl({
                 tag: 'a',
                 target: '_blank',
-                onclick: accountCreationCallback,
                 text: 'Create an Account',
             })
+
+            footnoteLink.onclick = handleAccountCreation
+
             footnote.appendChild(footnoteLink)
         }
         this.showDialog({

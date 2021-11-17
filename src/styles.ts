@@ -23,6 +23,10 @@ export default `
     justify-content: center;
 }
 
+.%prefix% a {
+    cursor: pointer;
+}
+
 .%prefix%-active {
     display: flex;
 }
