@@ -851,7 +851,7 @@ function isAndroid() {
 }
 
 function isAndroidWebView() {
-    return /wv/.test(navigator.userAgent)
+    return /wv/.test(navigator.userAgent) || /Android.*AppleWebKit/.test(navigator.userAgent);
 }
 
 function copyToClipboard(text: string) {
