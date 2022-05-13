@@ -13,6 +13,13 @@
     hash.js "^1.0.0"
     tslib "^2.0.3"
 
+"@greymass/return-path@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@greymass/return-path/-/return-path-0.0.2.tgz#053ca57eeeea5da970081ef3c818718a7a502f53"
+  integrity sha512-K1/AMGnLi3J3yhOfZPAwU4pxkN12dHt9NiL15fssZ7Kk1vO+m7k3c/T6kR5l8XnfPepeAdVlewRrsBE4gY6QIQ==
+  dependencies:
+    tslib "^2.1.0"
+
 "@snowpack/plugin-typescript@^1.1.1":
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@snowpack/plugin-typescript/-/plugin-typescript-1.2.1.tgz#7170b039d16d41963cc61a714fe7c37f3fdd9d51"
