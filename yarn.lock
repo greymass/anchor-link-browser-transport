@@ -947,17 +947,6 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@greymass/eosio@^0.6.0":
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/@greymass/eosio/-/eosio-0.6.1.tgz#2af601b6f38a37cb3c78b62d80fd293b80814f62"
-  integrity sha512-K9VmejZmXHczuLBdQzEQayzISEG/s1PQ9awNf3nMeiVOnmjC5jnw/qNatY1PDpVhXsu+FcW59EAoCEWpuKnrfA==
-  dependencies:
-    bn.js "^4.11.9"
-    brorand "^1.1.0"
-    elliptic "^6.5.4"
-    hash.js "^1.0.0"
-    tslib "^2.0.3"
-
 "@greymass/miniaes@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@greymass/miniaes/-/miniaes-1.0.0.tgz#2337a4637edbb49289f3c977c5891bb6bef1ba75"
@@ -1210,6 +1199,26 @@
     "@typescript-eslint/types" "5.17.0"
     eslint-visitor-keys "^3.0.0"
 
+"@wharfkit/antelope@^1.0.7":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@wharfkit/antelope/-/antelope-1.0.7.tgz#5ca010db963e061b2e8c47c14e55f86817718c2e"
+  integrity sha512-C4DRC4U+qC2XQKUgwznKX6i8xdKo+ZqxkZURrPTtY3v53IvKwj+3amTQQSpuECechS5x6ItcT+/fOFBNlQ2Juw==
+  dependencies:
+    bn.js "^4.11.9"
+    brorand "^1.1.0"
+    elliptic "^6.5.4"
+    hash.js "^1.0.0"
+    pako "^2.1.0"
+    tslib "^2.0.3"
+
+"@wharfkit/signing-request@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@wharfkit/signing-request/-/signing-request-3.2.0.tgz#94cab97e27d1001973771056cfb9d54c02e45354"
+  integrity sha512-rIMzqwAKA5vb09+1BI+9fUXbj73JIkYcD1XT/Tom+k/+bqi51JcmC0trjCOjTUOK9UYDabpxYFixrf1ZvQymKw==
+  dependencies:
+    "@wharfkit/antelope" "^1.0.7"
+    tslib "^2.0.3"
+
 acorn-jsx@^5.3.1:
   version "5.3.2"
   resolved "https://registry.yarnpkg.com/acorn-jsx/-/acorn-jsx-5.3.2.tgz#7ed5bb55908b3b2f1bc55c6af1653bada7f07937"
@@ -1235,14 +1244,14 @@ ajv@^6.10.0, ajv@^6.12.4:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-anchor-link@^3.3.0:
-  version "3.5.1"
-  resolved "https://registry.yarnpkg.com/anchor-link/-/anchor-link-3.5.1.tgz#e7bff3ef6933881f332925767de5963dd2356c46"
-  integrity sha512-77hRmr1M8PwExXhTwKFrE2jXPq4AsfoUCqAgcQelD86TvEuDUrXgKNl1zfoAXLC8mIU3ZW+QdF7fieZQRrq7Kg==
+anchor-link@^3.6.0:
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/anchor-link/-/anchor-link-3.6.0.tgz#93aabfec8fd33c84021abb5d5f44ff75c196abd4"
+  integrity sha512-orXjgcJyg60rpWzGDuRRzQs4v1tOf0hRP1ERn+rTB5wdhujmhb3g9VDrvAKxdNVGPQQxAdT1U1XtJ0gXm3wQVw==
   dependencies:
-    "@greymass/eosio" "^0.6.0"
     "@greymass/miniaes" "^1.0.0"
-    eosio-signing-request "^2.5.0"
+    "@wharfkit/antelope" "^1.0.7"
+    "@wharfkit/signing-request" "^3.2.0"
     fetch-ponyfill "^7.1.0"
     isomorphic-ws "^4.0.1"
     pako "^2.0.3"
@@ -1534,14 +1543,6 @@ elliptic@^6.5.4:
     inherits "^2.0.4"
     minimalistic-assert "^1.0.1"
     minimalistic-crypto-utils "^1.0.1"
-
-eosio-signing-request@^2.5.0:
-  version "2.5.1"
-  resolved "https://registry.yarnpkg.com/eosio-signing-request/-/eosio-signing-request-2.5.1.tgz#2d33e4e6aeb747ea80cb1357b11ef77d1e2f18e6"
-  integrity sha512-vA1jg118gSLJUmAs9FLDfrz+h2/sxt3lEKu19AO1lAzCgCB3Ib70VGfmFoLrty9Qzm1USTnn1EkogN780Ylq0Q==
-  dependencies:
-    "@greymass/eosio" "^0.6.0"
-    tslib "^2.0.3"
 
 escalade@^3.1.1:
   version "3.1.1"
@@ -2149,6 +2150,11 @@ pako@^2.0.3:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/pako/-/pako-2.0.4.tgz#6cebc4bbb0b6c73b0d5b8d7e8476e2b2fbea576d"
   integrity sha512-v8tweI900AUkZN6heMU/4Uy4cXRc2AYNRggVmTR+dEncawDJgCdLMximOVA2p4qO57WMynangsfGRb5WD6L1Bg==
+
+pako@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/pako/-/pako-2.1.0.tgz#266cc37f98c7d883545d11335c00fbd4062c9a86"
+  integrity sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==
 
 parent-module@^1.0.0:
   version "1.0.1"
