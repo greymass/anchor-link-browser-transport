@@ -16,6 +16,7 @@
     "src/*"
   ],
   "dependencies": {
+    "@greymass/return-path": "^0.0.2",
     "tslib": "^2.0.3"
   },
   "peerDependencies": {
