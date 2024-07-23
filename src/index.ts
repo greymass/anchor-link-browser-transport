@@ -327,6 +327,7 @@ export default class BrowserTransport implements LinkTransport {
             linkA.addEventListener('click', (event) => {
                 event.preventDefault()
                 iframe.setAttribute('src', sameDeviceUri)
+                window.location.href = sameDeviceUri
             })
         } else {
             linkA.addEventListener('click', (event) => {
